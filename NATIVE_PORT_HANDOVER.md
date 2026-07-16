@@ -200,18 +200,23 @@ headlessly** (verified end-to-end by probe programs, no GUI needed).
   BEFORE `plugin.Load`, or `Map.InitTheater`'s catch shows a **MessageBox** that blocks forever
   on a headless/locked display.
 
-## GUI verification still to do (desktop session was password-locked overnight)
+## GUI status (desktop session was password-locked overnight — pixels unverified, but:)
 
-1. `mkdir -p ~/CnCRemastered/Mods/Red_Alert && ln -s <mod>/build/remaster/Vanilla_RA ~/CnCRemastered/Mods/Red_Alert/Vanilla_RA`
-   (the editor's mod folder on mono resolves to `~/CnCRemastered\Mods` — PlatformPath handles the
-   backslash; the folder-name lookup in `GetModPaths` needs the `ccmod.json` `game_type: RA`).
-2. Set `ModsToLoadRA` to `Vanilla_RA` in the editor settings (Settings dialog, or user.config under
-   `~/.local/share/Nyerguds/MobiusMapEditor.exe_Url_*/1.6.1.0/user.config`).
-3. Launch from the game dir (`cd ~/.steam/steam/steamapps/common/CnCRemastered && mono <exe>`),
-   open one of the mod's converted TD maps from `build/remaster/Vanilla_RA/CustomMaps/*.MPR`,
-   confirm TD shores/bridges render, place a TD tile, save, and run the saved map through
-   `td_map_to_ra.py inspect-ra` / in-game.
-4. Wine is installed as a fallback runner (`wine <exe>`) if mono WinForms rendering misbehaves.
+**The editor's main window ("Mobius Map Editor v1.6.1.0") came up and sat in its normal message
+loop** when launched with the mod configured — no classic-mix error dialog, no InitTheater
+"Whoops!" box. Verified via X window titles + a mono thread dump showing `Application.Run` idle.
+Setup already in place:
+- `~/CnCRemastered/Mods/Red_Alert/Vanilla_RA` → symlink to the mod's `build/remaster/Vanilla_RA`
+  (the editor's mod folder on mono resolves to `~/CnCRemastered\Mods`; PlatformPath handles it).
+- `ModsToLoadRA` defaults to `Vanilla_RA` in App.config (committed).
+- Launch: `cd ~/.steam/steam/steamapps/common/CnCRemastered && mono <fork>/CnCTDRAMapEditor/bin/Release/MobiusMapEditor.exe`
+  (an instance was left running overnight).
+
+**Morning walkthrough remaining:** open a converted TD map from
+`build/remaster/Vanilla_RA/CustomMaps/*.MPR`, confirm TD shores/bridges render on canvas and in
+the Templates list (Temperate; desert = Interior theater), place a TD tile, save, then re-verify
+the saved map with `td_map_to_ra.py inspect-ra` / in-game. Wine is installed as a fallback runner
+if mono WinForms rendering misbehaves visually.
 
 ## Known gaps / next steps
 
