@@ -277,7 +277,7 @@ namespace MobiusEditor.Utility
         {
             Rectangle rect = new Rectangle(0, 0, sourceImage.Width, sourceImage.Height);
             Bitmap targetImage = new Bitmap(rect.Width, rect.Height, sourceImage.PixelFormat);
-            targetImage.SetResolution(sourceImage.HorizontalResolution, sourceImage.VerticalResolution);
+            targetImage.SetResolutionSafe(sourceImage.HorizontalResolution, sourceImage.VerticalResolution);
             BitmapData sourceData = sourceImage.LockBits(rect, ImageLockMode.ReadOnly, sourceImage.PixelFormat);
             BitmapData targetData = targetImage.LockBits(rect, ImageLockMode.WriteOnly, targetImage.PixelFormat);
             int actualDataWidth = ((Image.GetPixelFormatSize(sourceImage.PixelFormat) * rect.Width) + 7) / 8;
@@ -302,7 +302,7 @@ namespace MobiusEditor.Utility
             if ((sourceImage.PixelFormat & PixelFormat.Indexed) != 0)
                 targetImage.Palette = sourceImage.Palette;
             // Restore DPI settings
-            targetImage.SetResolution(sourceImage.HorizontalResolution, sourceImage.VerticalResolution);
+            targetImage.SetResolutionSafe(sourceImage.HorizontalResolution, sourceImage.VerticalResolution);
             return targetImage;
         }
 
@@ -353,7 +353,7 @@ namespace MobiusEditor.Utility
         public static Bitmap PaintOn32bpp(Image image, Color? transparencyFillColor)
         {
             Bitmap bp = new Bitmap(image.Width, image.Height, PixelFormat.Format32bppArgb);
-            bp.SetResolution(image.HorizontalResolution, image.VerticalResolution);
+            bp.SetResolutionSafe(image.HorizontalResolution, image.VerticalResolution);
             using (Graphics gr = Graphics.FromImage(bp))
             {
                 if (transparencyFillColor.HasValue)

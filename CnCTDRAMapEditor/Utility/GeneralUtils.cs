@@ -628,7 +628,7 @@ namespace MobiusEditor.Utility
                     width = size.Width * fullCellsize;
                     height = size.Height * fullCellsize;
                     imageToUse = new Bitmap(width, height);
-                    imageToUse.SetResolution(image.HorizontalResolution, image.VerticalResolution);
+                    imageToUse.SetResolutionSafe(image.HorizontalResolution, image.VerticalResolution);
                     using (Graphics g = Graphics.FromImage(imageToUse))
                     {
                         g.DrawImage(imageToUse, new Rectangle(padX, padY, image.Width, image.Height),

@@ -26,6 +26,24 @@ namespace MobiusEditor.Utility
 {
     public static class ExtensionMethods
     {
+        /// <summary>
+        /// Sets the bitmap resolution, substituting 96 dpi for invalid source values.
+        /// Some platforms (mono/libgdiplus) report 0 dpi on bitmaps where GDI+ reports 96,
+        /// and SetResolution throws on non-positive values.
+        /// </summary>
+        public static void SetResolutionSafe(this Bitmap bitmap, float xDpi, float yDpi)
+        {
+            if (float.IsNaN(xDpi) || xDpi <= 0)
+            {
+                xDpi = 96;
+            }
+            if (float.IsNaN(yDpi) || yDpi <= 0)
+            {
+                yDpi = 96;
+            }
+            bitmap.SetResolution(xDpi, yDpi);
+        }
+
         public static float ToLinear(this float v)
         {
             return (v < 0.04045f) ? (v * 25.0f / 323.0f) : (float)Math.Pow(((200.0f * v) + 11.0f) / 211.0f, 12.0f / 5.0f);
@@ -449,7 +467,7 @@ namespace MobiusEditor.Utility
         public static Bitmap FitToBoundingBox(this Image image, Rectangle cutout, int maxWidth, int maxHeight, Color clearColor)
         {
             Bitmap newImg = new Bitmap(maxWidth, maxHeight);
-            newImg.SetResolution(image.HorizontalResolution, image.VerticalResolution);
+            newImg.SetResolutionSafe(image.HorizontalResolution, image.VerticalResolution);
             Rectangle resized = GeneralUtils.GetBoundingBoxCenter(cutout.Width, cutout.Height, maxWidth, maxHeight);
             using (Graphics g = Graphics.FromImage(newImg))
             {
@@ -515,7 +533,7 @@ namespace MobiusEditor.Utility
         {
             Rectangle rect = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
             Bitmap targetImage = new Bitmap(rect.Width, rect.Height, PixelFormat.Format32bppArgb);
-            targetImage.SetResolution(bitmap.HorizontalResolution, bitmap.VerticalResolution);
+            targetImage.SetResolutionSafe(bitmap.HorizontalResolution, bitmap.VerticalResolution);
             BitmapData sourceData = bitmap.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
             BitmapData targetData = targetImage.LockBits(rect, ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
             int actualDataWidth = ((Image.GetPixelFormatSize(PixelFormat.Format32bppArgb) * rect.Width) + 7) / 8;
@@ -540,7 +558,7 @@ namespace MobiusEditor.Utility
             }
             targetImage.UnlockBits(targetData);
             bitmap.UnlockBits(sourceData);
-            targetImage.SetResolution(bitmap.HorizontalResolution, bitmap.VerticalResolution);
+            targetImage.SetResolutionSafe(bitmap.HorizontalResolution, bitmap.VerticalResolution);
             return targetImage;
         }
 
@@ -566,7 +584,7 @@ namespace MobiusEditor.Utility
             var result = new Color[bitmap.Width, bitmap.Height];
             var sharpenImage = new Bitmap(bitmap);
             // Not sure if needed with a clone like this... still, better be sure.
-            sharpenImage.SetResolution(bitmap.HorizontalResolution, bitmap.VerticalResolution);
+            sharpenImage.SetResolutionSafe(bitmap.HorizontalResolution, bitmap.VerticalResolution);
             int width = bitmap.Width;
             int height = bitmap.Height;
             // Lock image bits for read/write.
@@ -757,12 +775,12 @@ namespace MobiusEditor.Utility
                 for (int y = 0; y < expandHeight; ++y)
                     Marshal.Copy(expandData, y * expandStride, new IntPtr(scan0 + y * targetStride), expandStride);
                 expandImage.UnlockBits(targetData);
-                expandImage.SetResolution(bitmap.HorizontalResolution, bitmap.VerticalResolution);
+                expandImage.SetResolutionSafe(bitmap.HorizontalResolution, bitmap.VerticalResolution);
                 int borderWidth = newSize.Width * borderFractionX / fractionDividerX;
                 int borderHeight = newSize.Height * borderFractionY / fractionDividerY;
                 using (Bitmap scaledImage = new Bitmap(newSize.Width + borderWidth * 2, newSize.Height + borderHeight * 2, PixelFormat.Format32bppArgb))
                 {
-                    scaledImage.SetResolution(bitmap.HorizontalResolution, bitmap.VerticalResolution);
+                    scaledImage.SetResolutionSafe(bitmap.HorizontalResolution, bitmap.VerticalResolution);
                     // Scale expanded image to the intended size, accounting for the added border.
                     using (Graphics g2 = Graphics.FromImage(scaledImage))
                     {
