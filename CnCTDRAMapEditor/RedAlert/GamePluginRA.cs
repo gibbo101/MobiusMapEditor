@@ -1433,8 +1433,21 @@ namespace MobiusEditor.RedAlert
                     TemplateType match = null;
                     foreach (string prefix in new[] { "tdw", "td" })
                     {
-                        if (name.Length > prefix.Length && name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
-                            && vanillaByName.TryGetValue(name.Substring(prefix.Length), out TemplateType candidate)
+                        if (name.Length <= prefix.Length || !name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                        {
+                            continue;
+                        }
+                        string baseName = name.Substring(prefix.Length);
+                        if (!vanillaByName.TryGetValue(baseName, out TemplateType candidate))
+                        {
+                            // TD shores sh1..sh9 are named sh01..sh09 in RA.
+                            if (baseName.Length == 3 && baseName.StartsWith("sh", StringComparison.OrdinalIgnoreCase)
+                                && baseName[2] >= '1' && baseName[2] <= '9')
+                            {
+                                vanillaByName.TryGetValue("sh0" + baseName[2], out candidate);
+                            }
+                        }
+                        if (candidate != null
                             && candidate.IconWidth == tt.IconWidth && candidate.IconHeight == tt.IconHeight
                             && (candidate.Flags & (TemplateTypeFlag.Clear | TemplateTypeFlag.Group)) == TemplateTypeFlag.None)
                         {

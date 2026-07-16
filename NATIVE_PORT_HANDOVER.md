@@ -186,13 +186,19 @@ headlessly** (verified end-to-end by probe programs, no GUI needed).
   types (max id 725 + group dummies); `tdsh10.Init` → `ExistsInTheater=True`, real thumbnail.
   (`sh01`/`tdbridge1` "got=False" at icon 0 is correct — masked-out first icon.)
 - `RoundTripProbe.cs` (headless): full plugin boot (classic init 0 errors — including the mod's
-  TFASSETS.MIX via the ccdata mod path), loads a real converted map
-  (`UGC_F1BE000000000006...MPR`), counts TD vs vanilla cells, saves, for byte-level diff of the
-  re-encoded `[TFTDTiles]`/`[MapPack]` against the original via `td_map_to_ra.py`'s codec. Slow
-  under mono (thousands of first-run art decodes); was still running at write-up time — check
-  `scratchpad/roundtrip.log`. If the diff hasn't been done: decode both files' sections with
-  `lcw_block_decompress`/`uublock_decode` from `scripts/td_map_to_ra.py` and compare cell arrays
-  (icons of masked cells may legitimately re-encode as 0).
+  TFASSETS.MIX via the ccdata mod path), loaded the real converted map
+  (`UGC_F1BE000000000006...MPR`): **164 TD cells recognised from [TFTDTiles]** (tdsh34/8/33/12/...),
+  837 vanilla cells; saved; cell-array diff against the original via `td_map_to_ra.py`'s codec:
+  **[TFTDTiles] 0 diffs, [MapPack] 0 diffs — perfect round-trip.** (Required porting the
+  transcoder's TD `sh1–9` → RA `sh01–09` rename into `GetTFTDFallback`.) The only load errors are
+  `TDBLOSSOM` structure references — the editor doesn't know the mod's custom BUILDINGS yet;
+  that's a separate, later workstream (same pattern: generated declarations).
+- `InitProbe.cs` (headless): all 729 template types `Init()` with zero exceptions in ~3s;
+  **419 exist in Temperate** (vanilla + TD temperate/shared) and **308 in Interior = the desert
+  slot** (incl. the 163 TD desert tiles) — desert authoring is live.
+- Probe gotcha for future headless work: managers must be `Reset(GameType.RedAlert, theater)`
+  BEFORE `plugin.Load`, or `Map.InitTheater`'s catch shows a **MessageBox** that blocks forever
+  on a headless/locked display.
 
 ## GUI verification still to do (desktop session was password-locked overnight)
 
