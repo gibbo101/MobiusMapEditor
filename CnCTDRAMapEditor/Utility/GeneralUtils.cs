@@ -44,9 +44,72 @@ namespace MobiusEditor.Utility
         [DllImport("shlwapi.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
         static extern int StrCmpLogicalW(string x, string y);
 
+        private static bool useNative = Path.DirectorySeparatorChar == '\\';
+
         public int Compare(string x, string y)
         {
-            return StrCmpLogicalW(x, y);
+            if (useNative)
+            {
+                try
+                {
+                    return StrCmpLogicalW(x, y);
+                }
+                catch (DllNotFoundException)
+                {
+                    useNative = false;
+                }
+                catch (EntryPointNotFoundException)
+                {
+                    useNative = false;
+                }
+            }
+            return CompareManaged(x, y);
+        }
+
+        /// <summary>
+        /// Managed equivalent of StrCmpLogicalW: case-insensitive, with digit runs
+        /// compared by numeric value rather than character by character.
+        /// </summary>
+        public static int CompareManaged(string x, string y)
+        {
+            if (x == null || y == null)
+            {
+                return x == null ? (y == null ? 0 : -1) : 1;
+            }
+            int ix = 0, iy = 0;
+            while (ix < x.Length && iy < y.Length)
+            {
+                char cx = x[ix];
+                char cy = y[iy];
+                if (char.IsDigit(cx) && char.IsDigit(cy))
+                {
+                    int sx = ix, sy = iy;
+                    while (ix < x.Length && char.IsDigit(x[ix])) ix++;
+                    while (iy < y.Length && char.IsDigit(y[iy])) iy++;
+                    string nx = x.Substring(sx, ix - sx).TrimStart('0');
+                    string ny = y.Substring(sy, iy - sy).TrimStart('0');
+                    if (nx.Length != ny.Length)
+                    {
+                        return nx.Length - ny.Length;
+                    }
+                    int numCmp = string.CompareOrdinal(nx, ny);
+                    if (numCmp != 0)
+                    {
+                        return numCmp;
+                    }
+                }
+                else
+                {
+                    int chCmp = char.ToUpperInvariant(cx).CompareTo(char.ToUpperInvariant(cy));
+                    if (chCmp != 0)
+                    {
+                        return chCmp;
+                    }
+                    ix++;
+                    iy++;
+                }
+            }
+            return (x.Length - ix) - (y.Length - iy);
         }
     }
 
@@ -876,7 +939,21 @@ namespace MobiusEditor.Utility
         /// <param name="wParam">Additional message-specific information</param>
         /// <param name="lParam">Additional message-specific information.</param>
         /// <returns></returns>
-        [DllImport("user32.dll")]
-        public static extern int SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
+        [DllImport("user32.dll", EntryPoint = "SendMessage")]
+        private static extern int SendMessageNative(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
+
+        /// <summary>
+        /// Win32 SendMessage, as a no-op on platforms without user32. The messages sent through
+        /// this (WM_SETREDRAW, LVM_SETICONSPACING, TVM_SETITEM) are Win32 refinements that other
+        /// WinForms implementations handle acceptably without.
+        /// </summary>
+        public static int SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam)
+        {
+            if (Path.DirectorySeparatorChar != '\\')
+            {
+                return 0;
+            }
+            return SendMessageNative(hWnd, msg, wParam, lParam);
+        }
     }
 }

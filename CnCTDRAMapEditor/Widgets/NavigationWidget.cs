@@ -159,7 +159,9 @@ namespace MobiusEditor.Widgets
 
         public bool IsDragging()
         {
-            return includeNavigation && ((Control.MouseButtons & MouseButtons.Middle) != MouseButtons.None || (GetAsyncKeyState(32) & 0x8000) != 0);
+            // GetAsyncKeyState is user32-only; on other platforms space-drag falls away and middle-mouse panning remains.
+            return includeNavigation && ((Control.MouseButtons & MouseButtons.Middle) != MouseButtons.None
+                || (System.IO.Path.DirectorySeparatorChar == '\\' && (GetAsyncKeyState(32) & 0x8000) != 0));
         }
 
         private void DisableDragging()
