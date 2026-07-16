@@ -254,7 +254,7 @@ namespace MobiusEditor.Render
                     Rectangle renderBounds = new Rectangle(topLeft.X * tileSize.Width, topLeft.Y * tileSize.Height, tileSize.Width, tileSize.Height);
                     if (tileImg == null)
                     {
-                        bool success = Globals.TheTilesetManager.GetTileData(name, icon, out Tile tile, true, false);
+                        bool success = Globals.TheTilesetManager.GetTileData(name, ttype.GetShapeIndex(icon), out Tile tile, true, false);
                         if (tile != null && tile.Image != null)
                         {
                             Bitmap tileImage = tile.Image;

@@ -17,6 +17,10 @@ cd $REL && MONO_PATH=$REL:$REL/bin mono /tmp/probe.exe
   (Temperate 419 / Interior-desert 308 as of writing). Edit the `theater` variable to switch.
 - `RoundTripProbe.cs` - full plugin load of a converted TD map + save; diff the [TFTDTiles] and
   [MapPack] cell arrays against the original with the mod's td_map_to_ra.py codec (expect 0/0).
+- `RenderProbe.cs` - full plugin load + MapRenderer draw of the painted map layers to a PNG
+  (`/tmp/map-render.png`), reproducing the GUI canvas without a display. Args: [map] [png] [scale].
+  Also prints shape-multiplier resolution for sample TF templates (animated tiles expect
+  shapeIdx(1)=8 in-theater).
 
 Gotcha: Reset the megafile AND tileset managers to (RedAlert, <theater>) BEFORE plugin.Load, or
 Map.InitTheater's catch pops a MessageBox that blocks forever on a headless/locked display.

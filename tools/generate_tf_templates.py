@@ -141,6 +141,10 @@ def main():
             if ra_id in entries:
                 entries[ra_id][6].append(theatre)
                 continue
+            if td_name.lower() == 'clear1':
+                # TD clear ground: 16 positional icons (4x4 pattern), stored per-icon in maps.
+                entries[ra_id] = [ra_name, 4, 4, ' '.join(['CCCC'] * 4), None, td_name, [theatre]]
+                continue
             if td_name.lower() not in td_decls:
                 print(f'WARNING: no TD declaration for {td_name}; using clear land types',
                       file=sys.stderr)

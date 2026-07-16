@@ -3548,7 +3548,7 @@ namespace MobiusEditor
             Tile templateTile = null;
             if (template != null)
             {
-                Globals.TheTilesetManager.GetTileData(template.Name, template.GetIconIndex(template.GetFirstValidIcon()), out templateTile);
+                Globals.TheTilesetManager.GetTileData(template.Name, template.GetShapeIndex(template.GetIconIndex(template.GetFirstValidIcon())), out templateTile);
             }
             List<SmudgeType> smudges = plugin.Map.SmudgeTypes.Where(sm => sm.Size.Width == 1 && sm.Size.Height == 1 && sm.Thumbnail != null
                 && (!Globals.FilterTheaterObjects || sm.ExistsInTheater))

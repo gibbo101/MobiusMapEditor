@@ -106,6 +106,22 @@ namespace MobiusEditor.Model
         /// </summary>
         public Point EquivalentOffset { get; private set; } = Point.Empty;
 
+        /// <summary>First template ID of the Tiberian Factions TD-ported terrain range.</summary>
+        public const ushort TFTDTileIdFirst = 401;
+
+        private int tdShapeMultiplier = 1;
+
+        /// <summary>
+        /// Maps a map icon index onto the tileset shape index. Tiberian Factions' animated TD
+        /// tiles (shores, rivers) pack 8 water-animation frames per icon into the tileset as
+        /// shape = icon * 8; static tiles map 1:1. The multiplier is resolved per theater in
+        /// <see cref="Init"/> from the frame count the tileset actually reports.
+        /// </summary>
+        public int GetShapeIndex(int icon)
+        {
+            return icon * tdShapeMultiplier;
+        }
+
         /// <summary>
         /// Creates a TemplateType object. Not public, since the real constructor should always be the one with the default land type mapping.
         /// </summary>
@@ -502,8 +518,13 @@ namespace MobiusEditor.Model
             }
             this.extraTilesFoundOn1x1 = false;
             int tilesLen = Globals.TheTilesetManager.GetTileDataLength(Name);
+            // Tiberian Factions animated TD tiles (shores, rivers) pack 8 water-animation frames
+            // per icon into the tileset (shape = icon * 8); static TF tiles map 1:1. Detected per
+            // theater: the tileset reports more shapes than the template has icons.
+            this.tdShapeMultiplier = ID >= TFTDTileIdFirst && !isGroup && tilesLen > NumIcons ? 8 : 1;
             // This allows mods to add 'random' tiles to existing 1x1 tiles. Check excludes 'Clear' terrain and items already defined as random.
-            if (IconWidth == 1 & IconHeight == 1 && !Flags.HasFlag(TemplateTypeFlag.Clear) && (!isRandom || fileInit) && !isGroup)
+            // Also excludes TF animated tiles, whose extra shapes are animation frames, not random variants.
+            if (IconWidth == 1 & IconHeight == 1 && tdShapeMultiplier == 1 && !Flags.HasFlag(TemplateTypeFlag.Clear) && (!isRandom || fileInit) && !isGroup)
             {
                 if (tilesLen > 1)
                 {
@@ -564,7 +585,7 @@ namespace MobiusEditor.Model
                             else // If forced, always fetch the graphics.
                                 fetchDummy = true;
                         }
-                        int iconToFetch = icon;
+                        int iconToFetch = GetShapeIndex(icon);
                         string nameToFetch = Name;
                         if (isGroup)
                         {
