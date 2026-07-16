@@ -78,9 +78,12 @@ namespace MobiusEditor.Utility
             }
             if (xmlDoc != null)
             {
+                // Split on both separator styles: archive-internal paths use '\' even on Unix.
+                int dirCut = xmlPath.LastIndexOfAny(new[] { '\\', '/' });
+                string xmlDir = dirCut < 0 ? String.Empty : xmlPath.Substring(0, dirCut + 1);
                 foreach (XmlNode fileNode in xmlDoc.SelectNodes("TilesetFiles/File"))
                 {
-                    string xmlFile = Path.Combine(Path.GetDirectoryName(xmlPath), fileNode.InnerText);
+                    string xmlFile = xmlDir + fileNode.InnerText;
                     XmlDocument fileXmlDoc = null;
                     using (Stream xmlStream = archiveManager.OpenFile(xmlFile))
                     {

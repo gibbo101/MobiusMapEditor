@@ -142,7 +142,7 @@ namespace MobiusEditor.Utility
             {
                 gamePath = Path.Combine(applicationPath, gamePath);
             }
-            string fullPath = Path.Combine(gamePath, archivePath);
+            string fullPath = PlatformPath.Resolve(Path.Combine(gamePath, archivePath));
             // Mod paths might still add it, but this initial check is returned.
             return canBeEmbedded || File.Exists(fullPath);
         }
@@ -198,7 +198,7 @@ namespace MobiusEditor.Utility
                 // In each mod folder, try to read all mix files.
                 foreach (string modPath in modPaths)
                 {
-                    string mixPath = Path.Combine(modPath, "ccdata");
+                    string mixPath = PlatformPath.Resolve(Path.Combine(modPath, "ccdata"));
                     if (!Directory.Exists(mixPath))
                     {
                         continue;
@@ -211,6 +211,7 @@ namespace MobiusEditor.Utility
                     }
                 }
             }
+            gamePath = PlatformPath.Resolve(gamePath);
             if (Directory.Exists(gamePath))
             {
                 foreach (string filePath in Directory.GetFiles(gamePath, archiveMask))
@@ -276,14 +277,14 @@ namespace MobiusEditor.Utility
             {
                 gamePath = Path.Combine(applicationPath, gamePath);
             }
-            string rootPath = Path.Combine(applicationPath, path);
+            string rootPath = PlatformPath.Resolve(Path.Combine(applicationPath, path));
             // 0. Overrides in actual program folder.
             if (File.Exists(rootPath))
             {
                 return File.Open(rootPath, FileMode.Open, FileAccess.Read);
             }
             // 1. Loose files in game files path
-            string loosePath = Path.Combine(gamePath, path);
+            string loosePath = PlatformPath.Resolve(Path.Combine(gamePath, path));
             if (File.Exists(loosePath))
             {
                 return File.Open(loosePath, FileMode.Open, FileAccess.Read);
@@ -293,7 +294,7 @@ namespace MobiusEditor.Utility
             {
                 foreach (string modFilePath in modPaths)
                 {
-                    string modPath = Path.Combine(modFilePath, "ccdata", path);
+                    string modPath = PlatformPath.Resolve(Path.Combine(modFilePath, "ccdata", path));
                     if (File.Exists(modPath))
                     {
                         return File.Open(modPath, FileMode.Open, FileAccess.Read);
@@ -398,7 +399,7 @@ namespace MobiusEditor.Utility
             {
                 return false;
             }
-            string localPath = Path.Combine(readFolder, mixName);
+            string localPath = PlatformPath.Resolve(Path.Combine(readFolder, mixName));
             MixFile mixFile = null;
             if (File.Exists(localPath))
             {

@@ -85,8 +85,12 @@ namespace MobiusEditor.Utility
                 {
                     TGA tga = null;
                     JObject metadata = null;
-                    string name = Path.GetFileNameWithoutExtension(filename);
-                    string archiveDir = Path.GetDirectoryName(filename);
+                    // Split on both separator styles: archive-internal paths use '\' even on Unix.
+                    int dirCut = filename.LastIndexOfAny(new[] { '\\', '/' });
+                    string plainName = dirCut < 0 ? filename : filename.Substring(dirCut + 1);
+                    int extCut = plainName.LastIndexOf('.');
+                    string name = extCut < 0 ? plainName : plainName.Substring(0, extCut);
+                    string archiveDir = dirCut < 0 ? String.Empty : filename.Substring(0, dirCut);
                     string archivePath = archiveDir + ".ZIP";
                     // First attempt to find the texture in an archive
                     if (tga == null)

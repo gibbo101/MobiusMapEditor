@@ -193,7 +193,7 @@ namespace MobiusEditor.Utility
 
         private static bool RemasterFileTest(string basePath)
         {
-            return File.Exists(Path.Combine(basePath, "DATA", "CONFIG.MEG"));
+            return File.Exists(PlatformPath.Resolve(Path.Combine(basePath, "DATA", "CONFIG.MEG")));
         }
 
         public static bool LoadEditorRemastered(string runPath, Dictionary<GameType, string[]> modPaths, MixFileNameGenerator romfis)

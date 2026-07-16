@@ -57,6 +57,7 @@ namespace MobiusEditor.Utility
             {
                 archivePath = Path.Combine(LoadRoot, archivePath);
             }
+            archivePath = PlatformPath.Resolve(archivePath);
             if (!File.Exists(archivePath))
             {
                 return false;
@@ -81,13 +82,13 @@ namespace MobiusEditor.Utility
             {
                 foreach (string modPath in modPaths)
                 {
-                    if (File.Exists(Path.Combine(path, modPath)))
+                    if (File.Exists(PlatformPath.Resolve(Path.Combine(modPath, path))))
                     {
                         return true;
                     }
                 }
             }
-            return File.Exists(Path.Combine(looseFilePath, path)) || filenames.Contains(path.ToUpper());
+            return File.Exists(PlatformPath.Resolve(Path.Combine(looseFilePath, path))) || filenames.Contains(path.ToUpper().Replace('/', '\\'));
         }
 
         public Stream OpenFile(string path)
@@ -96,7 +97,7 @@ namespace MobiusEditor.Utility
             {
                 throw new ObjectDisposedException(GetType().FullName);
             }
-            string loosePath = Path.Combine(looseFilePath, path);
+            string loosePath = PlatformPath.Resolve(Path.Combine(looseFilePath, path));
             if (File.Exists(loosePath))
             {
                 return File.Open(loosePath, FileMode.Open, FileAccess.Read);
@@ -105,16 +106,17 @@ namespace MobiusEditor.Utility
             {
                 foreach (string modFilePath in modPaths)
                 {
-                    string modPath = Path.Combine(modFilePath, path);
+                    string modPath = PlatformPath.Resolve(Path.Combine(modFilePath, path));
                     if (File.Exists(modPath))
                     {
                         return File.Open(modPath, FileMode.Open, FileAccess.Read);
                     }
                 }
             }
+            string archiveKey = path.ToUpper().Replace('/', '\\');
             foreach (var megafile in megafiles)
             {
-                var stream = megafile.OpenFile(path.ToUpper());
+                var stream = megafile.OpenFile(archiveKey);
                 if (stream != null)
                 {
                     return stream;

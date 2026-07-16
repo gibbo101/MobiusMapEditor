@@ -348,13 +348,13 @@ namespace MobiusEditor
                         break;
                 }
             }
-            string previousVersionConfigFile = previousSettingsDir == null ? null : String.Concat(previousSettingsDir.FullName, @"\", userConfigFileName);
-            string currentVersionConfigFile = String.Concat(currentVersionConfigFileDir.FullName, @"\", userConfigFileName);
+            string previousVersionConfigFile = previousSettingsDir == null ? null : Path.Combine(previousSettingsDir.FullName, userConfigFileName);
+            string currentVersionConfigFile = Path.Combine(currentVersionConfigFileDir.FullName, userConfigFileName);
             if (!currentVersionConfigFileDir.Exists)
             {
                 Directory.CreateDirectory(currentVersionConfigFileDir.FullName);
             }
-            if (previousVersionConfigFile != null)
+            if (previousVersionConfigFile != null && File.Exists(previousVersionConfigFile))
             {
                 File.Copy(previousVersionConfigFile, currentVersionConfigFile, true);
             }
