@@ -34,18 +34,22 @@ namespace MobiusEditor.RedAlert
         public static readonly OverlayType Gems2 = new OverlayType(10, "gem02", "TEXT_OVERLAY_GEMS", OverlayTypeFlag.Gems, 2);
         public static readonly OverlayType Gems3 = new OverlayType(11, "gem03", "TEXT_OVERLAY_GEMS", OverlayTypeFlag.Gems, 2);
         public static readonly OverlayType Gems4 = new OverlayType(12, "gem04", "TEXT_OVERLAY_GEMS", OverlayTypeFlag.Gems, 2);
-        public static readonly OverlayType V12 = new OverlayType(13, "v12", "TEXT_STRUCTURE_TITLE_CIV12B", OverlayTypeFlag.Solid);
-        public static readonly OverlayType V13 = new OverlayType(14, "v13", "TEXT_STRUCTURE_TITLE_CIV12", OverlayTypeFlag.Solid);
-        public static readonly OverlayType V14 = new OverlayType(15, "v14", "TEXT_STRUCTURE_TITLE_CIV13", OverlayTypeFlag.Solid);
-        public static readonly OverlayType V15 = new OverlayType(16, "v15", "TEXT_STRUCTURE_TITLE_CIV14", OverlayTypeFlag.Solid);
-        public static readonly OverlayType V16 = new OverlayType(17, "v16", "TEXT_STRUCTURE_TITLE_CIV15", OverlayTypeFlag.Solid);
-        public static readonly OverlayType V17 = new OverlayType(18, "v17", "TEXT_STRUCTURE_TITLE_CIV16", OverlayTypeFlag.Solid);
-        public static readonly OverlayType V18 = new OverlayType(19, "v18", "TEXT_STRUCTURE_TITLE_CIV17", OverlayTypeFlag.Solid);
-        public static readonly OverlayType FlagSpot = new OverlayType(20, "fpls", "TEXT_CF_ONHOVER_SPOT", OverlayTypeFlag.FlagPlace | OverlayTypeFlag.Pavement);
-        public static readonly OverlayType WoodCrate = new OverlayType(21, "wcrate", "TEXT_OVERLAY_WCRATE", OverlayTypeFlag.WoodCrate);
-        public static readonly OverlayType SteelCrate = new OverlayType(22, "scrate", "TEXT_OVERLAY_SCRATE", OverlayTypeFlag.SteelCrate);
-        public static readonly OverlayType Fence = new OverlayType(23, "fenc", "TEXT_STRUCTURE_RA_FENC", OverlayTypeFlag.Wall);
-        public static readonly OverlayType WaterCrate = new OverlayType(24, "wwcrate", "TEXT_OVERLAY_WATER_CRATE", OverlayTypeFlag.WoodCrate);
+        // Tiberian Factions overlay layout (redalert/odata.cpp): TIB01 sits at id 13, directly
+        // after the gems so the launcher's contiguous resource-range check covers it; everything
+        // from V12 on is shifted up by one. Maps saved by this fork target the mod's ids.
+        public static readonly OverlayType Tib01 = new OverlayType(13, "tib01", "TEXT_OVERLAY_TIBERIUM", OverlayTypeFlag.Tiberium, 11);
+        public static readonly OverlayType V12 = new OverlayType(14, "v12", "TEXT_STRUCTURE_TITLE_CIV12B", OverlayTypeFlag.Solid);
+        public static readonly OverlayType V13 = new OverlayType(15, "v13", "TEXT_STRUCTURE_TITLE_CIV12", OverlayTypeFlag.Solid);
+        public static readonly OverlayType V14 = new OverlayType(16, "v14", "TEXT_STRUCTURE_TITLE_CIV13", OverlayTypeFlag.Solid);
+        public static readonly OverlayType V15 = new OverlayType(17, "v15", "TEXT_STRUCTURE_TITLE_CIV14", OverlayTypeFlag.Solid);
+        public static readonly OverlayType V16 = new OverlayType(18, "v16", "TEXT_STRUCTURE_TITLE_CIV15", OverlayTypeFlag.Solid);
+        public static readonly OverlayType V17 = new OverlayType(19, "v17", "TEXT_STRUCTURE_TITLE_CIV16", OverlayTypeFlag.Solid);
+        public static readonly OverlayType V18 = new OverlayType(20, "v18", "TEXT_STRUCTURE_TITLE_CIV17", OverlayTypeFlag.Solid);
+        public static readonly OverlayType FlagSpot = new OverlayType(21, "fpls", "TEXT_CF_ONHOVER_SPOT", OverlayTypeFlag.FlagPlace | OverlayTypeFlag.Pavement);
+        public static readonly OverlayType WoodCrate = new OverlayType(22, "wcrate", "TEXT_OVERLAY_WCRATE", OverlayTypeFlag.WoodCrate);
+        public static readonly OverlayType SteelCrate = new OverlayType(23, "scrate", "TEXT_OVERLAY_SCRATE", OverlayTypeFlag.SteelCrate);
+        public static readonly OverlayType Fence = new OverlayType(24, "fenc", "TEXT_STRUCTURE_RA_FENC", OverlayTypeFlag.Wall);
+        public static readonly OverlayType WaterCrate = new OverlayType(25, "wwcrate", "TEXT_OVERLAY_WATER_CRATE", OverlayTypeFlag.WoodCrate);
 
         private static OverlayType[] Types;
 

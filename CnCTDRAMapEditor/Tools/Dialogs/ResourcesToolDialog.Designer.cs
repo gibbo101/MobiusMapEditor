@@ -46,6 +46,7 @@ namespace MobiusEditor.Tools.Dialogs
             this.lblResBounds = new System.Windows.Forms.Label();
             this.lblResBoundsVal = new System.Windows.Forms.Label();
             this.chkGems = new System.Windows.Forms.CheckBox();
+            this.chkTiberium = new System.Windows.Forms.CheckBox();
             this.nudBrushSize = new MobiusEditor.Controls.EnhNumericUpDown();
             this.lblBrushSize = new System.Windows.Forms.Label();
             this.tableLayoutPanel6.SuspendLayout();
@@ -60,6 +61,7 @@ namespace MobiusEditor.Tools.Dialogs
             this.tableLayoutPanel6.Controls.Add(this.lblResBounds, 0, 0);
             this.tableLayoutPanel6.Controls.Add(this.lblResBoundsVal, 1, 0);
             this.tableLayoutPanel6.Controls.Add(this.chkGems, 0, 2);
+            this.tableLayoutPanel6.Controls.Add(this.chkTiberium, 0, 3);
             this.tableLayoutPanel6.Controls.Add(this.nudBrushSize, 1, 1);
             this.tableLayoutPanel6.Controls.Add(this.lblBrushSize, 0, 1);
             this.tableLayoutPanel6.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -107,7 +109,19 @@ namespace MobiusEditor.Tools.Dialogs
             this.chkGems.TabIndex = 2;
             this.chkGems.Text = "Gems";
             this.chkGems.UseVisualStyleBackColor = true;
-            // 
+            //
+            // chkTiberium
+            //
+            this.chkTiberium.AutoSize = true;
+            this.tableLayoutPanel6.SetColumnSpan(this.chkTiberium, 2);
+            this.chkTiberium.Location = new System.Drawing.Point(3, 71);
+            this.chkTiberium.Name = "chkTiberium";
+            this.chkTiberium.Padding = new System.Windows.Forms.Padding(0, 2, 0, 2);
+            this.chkTiberium.Size = new System.Drawing.Size(68, 21);
+            this.chkTiberium.TabIndex = 5;
+            this.chkTiberium.Text = "Tiberium";
+            this.chkTiberium.UseVisualStyleBackColor = true;
+            //
             // nudBrushSize
             // 
             this.nudBrushSize.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -177,6 +191,7 @@ namespace MobiusEditor.Tools.Dialogs
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel6;
         private System.Windows.Forms.Label lblResBounds;
         private System.Windows.Forms.CheckBox chkGems;
+        private System.Windows.Forms.CheckBox chkTiberium;
         private System.Windows.Forms.Label lblBrushSize;
         private System.Windows.Forms.Label lblResBoundsVal;
         private Controls.EnhNumericUpDown nudBrushSize;

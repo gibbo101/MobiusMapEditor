@@ -52,10 +52,13 @@ namespace MobiusEditor.Model
         FootballField   /**/ = 1 << 11,
         /// <summary>Should be filtered out of the overlay types list.</summary>
         Unplaceable     /**/ = 1 << 12,
+        /// <summary>Is Tiberian Factions TD-style tiberium: a resource class of its own, so it
+        /// never takes part in the TiberiumOrGold visual-type randomisation.</summary>
+        Tiberium        /**/ = 1 << 13,
         /// <summary>Is a crate.</summary>
         Crate           /**/ = WoodCrate | SteelCrate,
         /// <summary>Is a resource.</summary>
-        Resource        /**/ = TiberiumOrGold | Gems,
+        Resource        /**/ = TiberiumOrGold | Gems | Tiberium,
     }
 
     [DebuggerDisplay("{Name}")]
@@ -78,8 +81,9 @@ namespace MobiusEditor.Model
 
         public Rectangle OverlapBounds => new Rectangle(0, 0, 1, 1);
         public int ZOrder => -1;
-        public bool IsResource => (Flags & (OverlayTypeFlag.TiberiumOrGold | OverlayTypeFlag.Gems)) != OverlayTypeFlag.None;
+        public bool IsResource => (Flags & OverlayTypeFlag.Resource) != OverlayTypeFlag.None;
         public bool IsTiberiumOrGold => (Flags & OverlayTypeFlag.TiberiumOrGold) != OverlayTypeFlag.None;
+        public bool IsTiberium => (Flags & OverlayTypeFlag.Tiberium) != OverlayTypeFlag.None;
         public bool IsGem => (Flags & OverlayTypeFlag.Gems) != OverlayTypeFlag.None;
         public bool IsWall => (Flags & OverlayTypeFlag.Wall) != OverlayTypeFlag.None;
         public bool IsPavement => (Flags & OverlayTypeFlag.Pavement) != OverlayTypeFlag.None;
@@ -94,7 +98,7 @@ namespace MobiusEditor.Model
         /// <summary>
         /// Defines that it is placeable under the "overlay" category (and not resource or wall)
         /// </summary>
-        public bool IsOverlay => (Flags & (OverlayTypeFlag.Wall | OverlayTypeFlag.TiberiumOrGold | OverlayTypeFlag.Gems | OverlayTypeFlag.Unplaceable)) == OverlayTypeFlag.None;
+        public bool IsOverlay => (Flags & (OverlayTypeFlag.Wall | OverlayTypeFlag.Resource | OverlayTypeFlag.Unplaceable)) == OverlayTypeFlag.None;
 
         public OverlayType(int id, string name, string textId, OverlayTypeFlag flags, string graphicsSource, int forceTileNr)
         {

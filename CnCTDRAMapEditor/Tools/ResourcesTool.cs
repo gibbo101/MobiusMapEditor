@@ -38,6 +38,7 @@ namespace MobiusEditor.Tools
         private readonly Label boundsResourcesLbl;
         private readonly NumericUpDown brushSizeNud;
         private readonly CheckBox gemsCheckBox;
+        private readonly CheckBox tiberiumCheckBox;
 
         public override bool IsBusy { get { return undoOverlays.Count > 0; } }
 
@@ -49,10 +50,11 @@ namespace MobiusEditor.Tools
             {
                 if (value is int val)
                 {
-                    int actualValue = (int)Math.Max(brushSizeNud.Minimum, Math.Min(brushSizeNud.Maximum, (val & 0x7FFFFFFF) | 1));
+                    int actualValue = (int)Math.Max(brushSizeNud.Minimum, Math.Min(brushSizeNud.Maximum, (val & 0x3FFFFFFF) | 1));
                     this.brushSizeNud.Value = actualValue;
                     this.gemsCheckBox.Checked = ((uint)val & 0x80000000) != 0;
-                    currentVal = gemsCheckBox.Checked ? (int)(0x80000000 | (uint)actualValue) : actualValue;
+                    this.tiberiumCheckBox.Checked = !gemsCheckBox.Checked && ((uint)val & 0x40000000) != 0;
+                    currentVal = EncodeCurrentVal(actualValue);
                 }
             }
         }
@@ -69,16 +71,33 @@ namespace MobiusEditor.Tools
         private readonly Dictionary<int, Overlay> redoOverlays = new Dictionary<int, Overlay>();
 
         public ResourcesTool(MapPanel mapPanel, MapLayerFlag layers, ToolStripStatusLabel statusLbl, Label boundsResourcesLbl, NumericUpDown brushSizeNud, CheckBox gemsCheckBox,
-            IGamePlugin plugin, UndoRedoList<UndoRedoEventArgs, ToolType> url)
+            CheckBox tiberiumCheckBox, IGamePlugin plugin, UndoRedoList<UndoRedoEventArgs, ToolType> url)
             : base(mapPanel, layers, statusLbl, plugin, url)
         {
             this.boundsResourcesLbl = boundsResourcesLbl;
             this.brushSizeNud = brushSizeNud;
             this.gemsCheckBox = gemsCheckBox;
+            this.tiberiumCheckBox = tiberiumCheckBox;
             this.brushSizeNud.ValueChanged += BrushSizeNud_ValueChanged;
             this.gemsCheckBox.CheckedChanged += GemsCheckBox_CheckedChanged;
+            this.tiberiumCheckBox.CheckedChanged += TiberiumCheckBox_CheckedChanged;
             navigationWidget.MouseoverSize = new Size((int)brushSizeNud.Value, (int)brushSizeNud.Value);
             Update();
+        }
+
+        /// <summary>Encodes brush size plus resource class into the tool's CurrentObject value:
+        /// bit 31 = gems, bit 30 = tiberium.</summary>
+        private int EncodeCurrentVal(int brushValue)
+        {
+            if (gemsCheckBox.Checked)
+            {
+                return (int)(0x80000000 | (uint)brushValue);
+            }
+            if (tiberiumCheckBox.Checked)
+            {
+                return (int)(0x40000000 | (uint)brushValue);
+            }
+            return brushValue;
         }
 
         private void Url_UndoRedoDone(object sender, UndoRedoEventArgs ev)
@@ -94,7 +113,7 @@ namespace MobiusEditor.Tools
         private void BrushSizeNud_ValueChanged(object sender, EventArgs e)
         {
             int actualValue = (int)brushSizeNud.Value | 1;
-            currentVal = gemsCheckBox.Checked ? (int)(0x80000000 | (uint)actualValue) : actualValue;
+            currentVal = EncodeCurrentVal(actualValue);
             if (brushSizeNud.Value != actualValue)
             {
                 // Will re-trigger this, and then go to the other case.
@@ -109,8 +128,20 @@ namespace MobiusEditor.Tools
 
         private void GemsCheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            int brushValue = (int)brushSizeNud.Value | 1;
-            currentVal = gemsCheckBox.Checked ? (int)(0x80000000 | (uint)brushValue) : brushValue;
+            if (gemsCheckBox.Checked && tiberiumCheckBox.Checked)
+            {
+                tiberiumCheckBox.Checked = false;
+            }
+            currentVal = EncodeCurrentVal((int)brushSizeNud.Value | 1);
+        }
+
+        private void TiberiumCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            if (tiberiumCheckBox.Checked && gemsCheckBox.Checked)
+            {
+                gemsCheckBox.Checked = false;
+            }
+            currentVal = EncodeCurrentVal((int)brushSizeNud.Value | 1);
         }
 
         private void ResourcesTool_KeyUpDown(object sender, KeyEventArgs e)
@@ -209,8 +240,9 @@ namespace MobiusEditor.Tools
 
         private void AddResource(Point location)
         {
-            OverlayType resourceType = gemsCheckBox.Checked ?
-                map.OverlayTypes.Where(t => t.IsGem).FirstOrDefault() :
+            OverlayType resourceType =
+                gemsCheckBox.Checked ? map.OverlayTypes.Where(t => t.IsGem).FirstOrDefault() :
+                tiberiumCheckBox.Checked ? map.OverlayTypes.Where(t => t.IsTiberium).FirstOrDefault() :
                 map.OverlayTypes.Where(t => t.IsTiberiumOrGold).FirstOrDefault();
             if (resourceType == null)
             {
@@ -369,6 +401,15 @@ namespace MobiusEditor.Tools
                 gemsCheckBox.Visible = false;
                 gemsCheckBox.Checked = false;
             }
+            if (map.OverlayTypes.Any(t => t.IsTiberium))
+            {
+                tiberiumCheckBox.Visible = true;
+            }
+            else
+            {
+                tiberiumCheckBox.Visible = false;
+                tiberiumCheckBox.Checked = false;
+            }
         }
 
         public override void UpdateStatus()
@@ -481,6 +522,8 @@ namespace MobiusEditor.Tools
                 {
                     Deactivate();
                     brushSizeNud.ValueChanged -= BrushSizeNud_ValueChanged;
+                    gemsCheckBox.CheckedChanged -= GemsCheckBox_CheckedChanged;
+                    tiberiumCheckBox.CheckedChanged -= TiberiumCheckBox_CheckedChanged;
                 }
                 disposedValue = true;
             }

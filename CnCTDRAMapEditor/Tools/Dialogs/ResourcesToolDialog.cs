@@ -38,6 +38,8 @@ namespace MobiusEditor.Tools.Dialogs
 
         public CheckBox GemsCheckBox => chkGems;
 
+        public CheckBox TiberiumCheckBox => chkTiberium;
+
         public ResourcesToolDialog(Form parentForm)
 #if !EDITMODE
             : base(parentForm)
@@ -51,7 +53,7 @@ namespace MobiusEditor.Tools.Dialogs
             IGamePlugin plugin, UndoRedoList<UndoRedoEventArgs, ToolType> undoRedoList)
         {
             Tool = new ResourcesTool(mapPanel, activeLayers, toolStatusLabel, BoundsResourcesLbl,
-                ResourceBrushSizeNud, GemsCheckBox, plugin, undoRedoList);
+                ResourceBrushSizeNud, GemsCheckBox, TiberiumCheckBox, plugin, undoRedoList);
         }
 #endif
     }
