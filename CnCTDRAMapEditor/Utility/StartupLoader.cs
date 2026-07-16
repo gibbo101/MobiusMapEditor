@@ -71,7 +71,7 @@ namespace MobiusEditor.Utility
                     }
                 }
                 // Lookup by folder name. Look in local mod folders (under user 'Documents') first.
-                addonModPath = Path.Combine(modsFolder, modDef);
+                addonModPath = PlatformPath.Resolve(Path.Combine(modsFolder, modDef));
                 if (CheckAddonPathModType(addonModPath, contentFile, modregex))
                 {
                     foundMods.Add(modDef);
@@ -111,7 +111,7 @@ namespace MobiusEditor.Utility
         {
             try
             {
-                string checkPath = Path.Combine(addonModPath, contentFile);
+                string checkPath = PlatformPath.Resolve(Path.Combine(addonModPath, contentFile));
                 if (!File.Exists(checkPath))
                 {
                     return false;
