@@ -218,6 +218,108 @@ the Templates list (Temperate; desert = Interior theater), place a TD tile, save
 the saved map with `td_map_to_ra.py inspect-ra` / in-game. Wine is installed as a fallback runner
 if mono WinForms rendering misbehaves visually.
 
+---
+
+# ⭐ TONIGHT'S OVERNIGHT SESSION (2026-07-16 → 17) — WORK ORDER
+
+Luke has reviewed the live findings below and wants them all fixed overnight. Read the
+"LIVE GUI TEST FINDINGS" section for full context on each. Ordered plan:
+
+1. **Finish the shore/animated-tile fix** (findings item 2 — design agreed, half-written in
+   the working tree; finish, regenerate, rebuild). Verify with the headless render probe:
+   the pond at TD Pitfall must show closed mud shorelines like the in-game reference
+   screenshot. Also re-run the round-trip probe: [TFTDTiles]/[MapPack] diffs must stay 0/0.
+2. **Overlay table: TIB01 + shifted V12–V18** (item 3). Green tiberium on canvas, tiberium
+   placeable via the Resources tool, OverlayPack round-trip verified against a shipped map
+   (same codec-diff method).
+3. **Teach the editor the mod's object catalog** (item 4): TDBLOSSOM first (kills the
+   data-loss hazard, item 1), then TD infantry/vehicles/buildings. Source of truth: the mod's
+   `redalert/` C++ entity definitions (verify against TD source per
+   [[feedback-review-td-source-first]]); `docs/catalogue.md` for the roster overview.
+   Generated-declaration pattern like TemplateTypesTF. Verify: load TD Pitfall → zero load
+   warnings → save-as → diff structures/units sections against original.
+4. **MessageBox blank buttons** (item 5) — investigate once, timebox it; if it's a deep mono
+   theming issue, document the workaround (button order) and move on.
+5. If all done: sweep the other shipped CustomMaps through load→save→codec-diff as a
+   regression suite; log per-map results in this file.
+
+Guardrails: never save over shipped maps until step 3 is done (Save-As to scratch only);
+commit per logical fix on `tf-mod-aware` (no Co-Authored-By trailers); leave the GUI closed
+when done; write results into this file + update cross-session memory.
+
+---
+
+# LIVE GUI TEST FINDINGS — 2026-07-16 evening (Luke's first hands-on session)
+
+The editor ran on Linux, loaded the shipped converted map "TD Pitfall", and rendered the TD
+terrain layer (cliffs, trees, rivers, static tiles all correct). Luke's testing surfaced the
+following, in priority order. In-game reference screenshot for all of it:
+`~/Pictures/Screenshots/Screenshot from 2026-07-16 19-15-05.png` (pond with mud shores, green
+tiberium fields, blossom trees).
+
+## 1. ⚠️ DATA-LOSS HAZARD: do not save over shipped maps yet
+
+The editor drops the mod's custom objects it doesn't know (14x "Structure 'TDBLOSSOM'
+references unknown structure" on load). A save would write the map back WITHOUT the blossom
+trees. Until the editor is taught the mod's object catalog, only Save-As to scratch names.
+Related mono quirk: the Save confirmation MessageBox renders its three buttons with NO TEXT —
+they are Yes | No | Cancel, left to right ("Yes" overwrites).
+
+## 2. Blocky/garbled coast — ROOT-CAUSED, fix half-written (PAUSED mid-edit)
+
+TD shore/river templates render as blocky wrong-frame tiles (compare in-game mud shores).
+Cause: the mod's tileset XML packs **8 water-animation frames per icon** for animated TD tiles
+(`shape = icon * 8 + animFrame`); static tiles map 1:1; winter `TDWCLEAR1` is 16 positional
+icons. Survey of the temperate XML: 68 templates at 8x (all shores + rivers; rivers have gaps
+from masked cells), 79 at 1:1, clear1 at 16. The editor fetches `shape = icon` directly →
+wrong art on every animated tile.
+
+**Fix design (agreed):** resolve the multiplier per theater at fetch time — in
+`TemplateType.Init`, if `GetTileDataLength(Name) > NumIcons` on a TF template (id 401+), set
+multiplier 8; fetch `icon * mult` (frame 0) in both `TemplateType.Init` (thumbnails) and
+`MapRenderer` (canvas); special-case `clear1` in the generator as 4x4/16 icons; suppress the
+1x1-random-tile promotion for id 401+ when the extra frames are animation.
+
+**WORKING TREE STATE (uncommitted, editor NOT rebuilt with these):**
+- `tools/generate_tf_templates.py` — clear1 4x4 special-case added.
+- `Model/TemplateType.cs` — `TFTDTileIdFirst` const + `GetShapeIndex(icon)` helper added
+  (multiplier field exists but is never set yet — currently always 1, no behavior change).
+- Still to do: compute the multiplier in `Init`, apply `GetShapeIndex` in `Init`'s thumbnail
+  fetch and in `MapRenderer`'s template fetch, regenerate `TemplateTypesTF.cs`, rebuild,
+  verify with the headless render probe (below).
+
+## 3. Tiberium renders as haystacks / Resources tool has no tiberium — DIAGNOSED, not started
+
+The mod inserts overlay `TIB01` at id 13 and shifts V12–V18 up to 14–20 (`redalert/odata.cpp`,
+transcoder `OVERLAY_CARRY`). The editor uses the vanilla RA overlay table, so id 13 reads as
+V12 haystacks (the brown lumps), and the Resources tool offers only ore/gems. Fix: adjust the
+fork's RA overlay list to the mod layout and add TIB01 as a resource-type overlay (art:
+TIB01/TI1, HD-only per odata.cpp notes). Mod-exclusive fork, so changing the table default is
+correct; document that maps saved by this fork target the mod's overlay ids.
+
+## 4. Mod objects missing from all object tabs — KNOWN GAP, next major workstream
+
+Infantry / Units / Structures tabs show vanilla RA rosters only. TD infantry, vehicles,
+buildings, and TDBLOSSOM need editor declarations — same generated-code pattern as the terrain
+templates, driven from the mod's entity catalog (`redalert/` C++ + docs/catalogue.md). This is
+also what closes the item-1 data-loss hazard.
+
+## 5. Mono WinForms UI quirks (running tally)
+
+Fixed so far: 0-dpi bitmap crash (SetResolutionSafe), shlwapi natural-sort crash (managed
+fallback), user32 SendMessage/GetAsyncKeyState (no-op guards; space-drag pan → middle-mouse).
+Open: MessageBox buttons render without text (item 1). Expect more to dribble in; each has
+been a small localized guard so far. Alternative if the quirks become tiresome: run the same
+exe under Wine with real .NET Framework (winetricks) for genuine WinForms rendering — wine 9.0
+is already installed as fallback.
+
+## Diagnostic tooling proven this session
+
+The headless render probe (extended `tools/probes/RoundTripProbe.cs`) draws the full map via
+`MapRenderer` to `/tmp/map-render.png` and reproduces the GUI's rendering bugs exactly —
+iterate there instead of relaunching the GUI. The blocky-coast symptom is visible in it and
+can serve as the verification target for the item-2 fix.
+
 ## Known gaps / next steps
 
 - `sh17`/`sh18` exist in BOTH temperate and desert with the same id+name (fine — one declaration).
