@@ -20,7 +20,7 @@ using System.Reflection;
 
 namespace MobiusEditor.RedAlert
 {
-    public static class TemplateTypes
+    public static partial class TemplateTypes
     {
         // Local shortcuts for init
         private static readonly string ThTem = TheaterTypes.Temperate.Name;
