@@ -22,6 +22,13 @@ cd $REL && MONO_PATH=$REL:$REL/bin mono /tmp/probe.exe
   Also prints shape-multiplier resolution for sample TF templates (animated tiles expect
   shapeIdx(1)=8 in-theater).
 
+- `MsgBoxTest.cs` - minimal GUI repro for the mono blank-MessageBox-buttons quirk: shows one
+  normal Button plus a YesNoCancel MessageBox. Needs an unlocked display; run and compare -
+  if the normal Button has text but the MessageBox buttons don't, the fix is a shadow
+  MessageBox wrapper in the MobiusEditor namespace; if BOTH are blank it's theme/font-level
+  (fall back to Wine). Build: mono-csc -r:System.Windows.Forms.dll -r:System.Drawing.dll
+  -out:/tmp/msgboxtest.exe MsgBoxTest.cs
+
 Gotcha: Reset the megafile AND tileset managers to (RedAlert, <theater>) BEFORE plugin.Load, or
 Map.InitTheater's catch pops a MessageBox that blocks forever on a headless/locked display.
 Game and mod paths are hardcoded for this machine at the top of each probe.
