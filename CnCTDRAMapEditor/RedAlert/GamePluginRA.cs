@@ -449,6 +449,7 @@ namespace MobiusEditor.RedAlert
             extraIniText.Sections.Remove("Trigs");
             extraIniText.Sections.Remove("Template");
             extraIniText.Sections.Remove("MapPack");
+            extraIniText.Sections.Remove("TFTDTiles");
             extraIniText.Sections.Remove("Terrain");
             extraIniText.Sections.Remove("OverlayPack");
             extraIniText.Sections.Remove("Overlay");
@@ -803,6 +804,7 @@ namespace MobiusEditor.RedAlert
             SetMissionRules(ini, isSolo, expansionEnabled, errors, ref modified);
             Dictionary<string, string> caseTrigs = Trigger.None.Yield().Concat(triggers.Select(t => t.Name)).ToDictionary(t => t, StringComparer.OrdinalIgnoreCase);
             LoadMapPack(ini, errors, ref modified);
+            LoadTFTDTiles(ini, errors, ref modified);
             LoadSmudge(ini, errors, ref modified);
             HashSet<string> checkUnitTrigs = Trigger.None.Yield().Concat(Map.FilterUnitTriggers(triggers).Select(t => t.Name)).ToHashSet(StringComparer.OrdinalIgnoreCase);
             LoadUnits(ini, caseTrigs, checkUnitTrigs, errors, ref modified);
@@ -1321,6 +1323,132 @@ namespace MobiusEditor.RedAlert
                 }
             }
             return triggers;
+        }
+
+        /// <summary>First template ID of the Tiberian Factions TD-ported terrain range.</summary>
+        private const ushort TFTDTileIdFirst = 401;
+
+        /// <summary>
+        /// Loads the Tiberian Factions [TFTDTiles] side-channel: the authentic TD-tile layer that
+        /// the mod's DLL renders over the vanilla-safe [MapPack] fallback. Same cell format as
+        /// MapPack (u16 type + u8 icon per cell); 0xFFFF means "no TD tile on this cell".
+        /// Cells carrying a TD tile override whatever MapPack put in the template layer, so the
+        /// editor edits the authentic layer and the fallback is re-synthesised on save.
+        /// </summary>
+        private void LoadTFTDTiles(INI ini, List<string> errors, ref bool modified)
+        {
+            INISection tdTilesSection = ini.Sections.Extract("TFTDTiles");
+            if (tdTilesSection == null)
+            {
+                return;
+            }
+            byte[] data = INITools.DecompressLCWSection(tdTilesSection, Map.Metrics, 3, errors, ref modified);
+            if (data == null)
+            {
+                return;
+            }
+            int width = Map.Metrics.Width;
+            int height = Map.Metrics.Height;
+            TemplateType[] templateTypes = Map.GetMapTemplateTypes();
+            int cellNr = 0;
+            using (BinaryReader reader = new BinaryReader(new MemoryStream(data)))
+            {
+                ushort[] cellTypes = new ushort[width * height];
+                for (int i = 0; i < cellTypes.Length; ++i)
+                {
+                    cellTypes[i] = reader.ReadUInt16();
+                }
+                for (int y = 0; y < height; ++y)
+                {
+                    for (int x = 0; x < width; ++x, ++cellNr)
+                    {
+                        ushort typeValue = cellTypes[cellNr];
+                        byte iconValue = reader.ReadByte();
+                        if (typeValue == 0xFFFF)
+                        {
+                            continue;
+                        }
+                        TemplateType templateType = typeValue >= templateTypes.Length ? null : templateTypes[typeValue];
+                        if (templateType == null)
+                        {
+                            errors.Add(String.Format("Unknown TD template value {0:X4} at cell {1} [{2},{3}]; skipping.", typeValue, cellNr, x, y));
+                            modified = true;
+                            continue;
+                        }
+                        if (templateType.Flags.HasFlag(TemplateTypeFlag.Clear) || templateType.Flags.HasFlag(TemplateTypeFlag.Group))
+                        {
+                            continue;
+                        }
+                        if (!templateType.ExistsInTheater && Globals.FilterTheaterObjects)
+                        {
+                            errors.Add(String.Format("TD template '{0}' at cell {1} [{2},{3}] is not available in the set theater; skipping.", templateType.Name.ToUpper(), cellNr, x, y));
+                            modified = true;
+                            continue;
+                        }
+                        if (iconValue >= templateType.NumIcons)
+                        {
+                            errors.Add(String.Format("TD template '{0}' at cell {1} [{2},{3}] has an icon set ({4}) that is outside its icons range; skipping.", templateType.Name.ToUpper(), cellNr, x, y, iconValue));
+                            modified = true;
+                            continue;
+                        }
+                        Map.Templates[y, x] = new Template { Type = templateType, Icon = iconValue };
+                    }
+                }
+            }
+        }
+
+        private Dictionary<ushort, TemplateType> tfTdFallbackMap;
+
+        /// <summary>
+        /// Maps a TD-ported template onto the vanilla RA template used as [MapPack] fallback:
+        /// strip the td/tdw name prefix and match a vanilla template by name, gated on identical
+        /// dimensions (mirrors the mod's td_map_to_ra.py transcoder). Null when there is no safe
+        /// fallback; the MapPack cell is then written clear.
+        /// </summary>
+        private TemplateType GetTFTDFallback(TemplateType tdType)
+        {
+            if (tfTdFallbackMap == null)
+            {
+                tfTdFallbackMap = new Dictionary<ushort, TemplateType>();
+                Dictionary<string, TemplateType> vanillaByName = new Dictionary<string, TemplateType>(StringComparer.OrdinalIgnoreCase);
+                List<TemplateType> tdTypes = new List<TemplateType>();
+                foreach (TemplateType tt in TemplateTypes.GetTypes())
+                {
+                    if (tt.IsGroup)
+                    {
+                        continue;
+                    }
+                    if (tt.ID < TFTDTileIdFirst)
+                    {
+                        vanillaByName[tt.Name] = tt;
+                    }
+                    else
+                    {
+                        tdTypes.Add(tt);
+                    }
+                }
+                foreach (TemplateType tt in tdTypes)
+                {
+                    string name = tt.Name;
+                    TemplateType match = null;
+                    foreach (string prefix in new[] { "tdw", "td" })
+                    {
+                        if (name.Length > prefix.Length && name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                            && vanillaByName.TryGetValue(name.Substring(prefix.Length), out TemplateType candidate)
+                            && candidate.IconWidth == tt.IconWidth && candidate.IconHeight == tt.IconHeight
+                            && (candidate.Flags & (TemplateTypeFlag.Clear | TemplateTypeFlag.Group)) == TemplateTypeFlag.None)
+                        {
+                            match = candidate;
+                            break;
+                        }
+                    }
+                    if (match != null)
+                    {
+                        tfTdFallbackMap[tt.ID] = match;
+                    }
+                }
+            }
+            return tfTdFallbackMap.TryGetValue(tdType.ID, out TemplateType fallback) ? fallback : null;
         }
 
         private void LoadMapPack(INI ini, List<string> errors, ref bool modified)
@@ -4190,8 +4318,14 @@ namespace MobiusEditor.RedAlert
 
         private void SaveMapPack(INI ini)
         {
+            // Cells carrying a Tiberian Factions TD template (id 401+) are split into two layers:
+            // [TFTDTiles] gets the authentic TD tile, [MapPack] gets a vanilla-safe fallback so the
+            // map stays loadable without the mod. Vanilla cells write 0xFFFF into TFTDTiles.
+            int tdCellCount = 0;
             using (MemoryStream stream = new MemoryStream())
             using (BinaryWriter writer = new BinaryWriter(stream, Encoding.UTF8, true))
+            using (MemoryStream tdStream = new MemoryStream())
+            using (BinaryWriter tdWriter = new BinaryWriter(tdStream, Encoding.UTF8, true))
             {
                 for (int y = 0; y < Map.Metrics.Height; ++y)
                 {
@@ -4200,10 +4334,22 @@ namespace MobiusEditor.RedAlert
                         Template template = Map.Templates[y, x];
                         if (template != null && (template.Type.Flags & TemplateTypeFlag.Clear) == TemplateTypeFlag.None)
                         {
-                            writer.Write((ushort)template.Type.ID);
+                            if (template.Type.ID >= TFTDTileIdFirst)
+                            {
+                                tdCellCount++;
+                                tdWriter.Write((ushort)template.Type.ID);
+                                TemplateType fallback = GetTFTDFallback(template.Type);
+                                writer.Write(fallback != null ? (ushort)fallback.ID : UInt16.MaxValue);
+                            }
+                            else
+                            {
+                                tdWriter.Write(UInt16.MaxValue);
+                                writer.Write((ushort)template.Type.ID);
+                            }
                         }
                         else
                         {
+                            tdWriter.Write(UInt16.MaxValue);
                             writer.Write(UInt16.MaxValue);
                         }
                     }
@@ -4215,16 +4361,32 @@ namespace MobiusEditor.RedAlert
                         Template template = Map.Templates[y, x];
                         if (template != null && (template.Type.Flags & TemplateTypeFlag.Clear) == TemplateTypeFlag.None)
                         {
-                            writer.Write((byte)template.Icon);
+                            if (template.Type.ID >= TFTDTileIdFirst)
+                            {
+                                tdWriter.Write((byte)template.Icon);
+                                TemplateType fallback = GetTFTDFallback(template.Type);
+                                writer.Write(fallback != null ? (byte)template.Icon : (byte)0);
+                            }
+                            else
+                            {
+                                tdWriter.Write((byte)0);
+                                writer.Write((byte)template.Icon);
+                            }
                         }
                         else
                         {
+                            tdWriter.Write((byte)0);
                             writer.Write((byte)0);
                         }
                     }
                 }
                 ini.Sections.Remove("MapPack");
                 INITools.CompressLCWSection(ini.Sections.Add("MapPack"), stream.ToArray());
+                ini.Sections.Remove("TFTDTiles");
+                if (tdCellCount > 0)
+                {
+                    INITools.CompressLCWSection(ini.Sections.Add("TFTDTiles"), tdStream.ToArray());
+                }
             }
         }
 
