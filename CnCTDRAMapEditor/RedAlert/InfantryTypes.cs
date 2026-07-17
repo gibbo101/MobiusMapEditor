@@ -19,7 +19,7 @@ using System.Reflection;
 
 namespace MobiusEditor.RedAlert
 {
-    public static class InfantryTypes
+    public static partial class InfantryTypes
     {
         public static readonly InfantryType E1 = new InfantryType(0, "e1", "TEXT_UNIT_RA_E1", "Greece", UnitTypeFlag.Armed);
         public static readonly InfantryType E2 = new InfantryType(1, "e2", "TEXT_UNIT_RA_E2", "USSR", UnitTypeFlag.Armed);

@@ -569,6 +569,9 @@
     <Compile Include="Utility\MixPath.cs" />
     <Compile Include="Utility\MRU.cs" />
     <Compile Include="RedAlert\TemplateTypesTF.cs" />
+    <Compile Include="RedAlert\BuildingTypesTF.cs" />
+    <Compile Include="RedAlert\UnitTypesTF.cs" />
+    <Compile Include="RedAlert\InfantryTypesTF.cs" />
     <Compile Include="Utility\PlatformPath.cs" />
     <Compile Include="Utility\PngHandler.cs" />
     <Compile Include="Utility\PropertyTracker.cs" />

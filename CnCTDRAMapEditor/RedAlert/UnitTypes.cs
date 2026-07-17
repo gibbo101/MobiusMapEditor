@@ -19,7 +19,7 @@ using MobiusEditor.Model;
 
 namespace MobiusEditor.RedAlert
 {
-    public static class UnitTypes
+    public static partial class UnitTypes
     {
         public static readonly UnitType HTank = new VehicleType(0, "4tnk", "TEXT_UNIT_RA_4TNK", "USSR", FrameUsage.Frames32Full, FrameUsage.Frames32Full, UnitTypeFlag.Armed | UnitTypeFlag.Turret);
         public static readonly UnitType MTank = new VehicleType(1, "3tnk", "TEXT_UNIT_RA_3TNK", "USSR", FrameUsage.Frames32Full, FrameUsage.Frames32Full, UnitTypeFlag.Armed | UnitTypeFlag.Turret);

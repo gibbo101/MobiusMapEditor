@@ -19,7 +19,7 @@ using System.Reflection;
 
 namespace MobiusEditor.RedAlert
 {
-    public static class HouseTypes
+    public static partial class HouseTypes
     {
         public static readonly HouseType Spain = new HouseType(0, "Spain", "TEXT_FACTION_NAME_FACTION_3", HouseTypeFlag.ForAlliances, "SPAIN");
         public static readonly HouseType Greece = new HouseType(1, "Greece", "TEXT_FACTION_NAME_FACTION_4", HouseTypeFlag.ForAlliances, "GREECE");

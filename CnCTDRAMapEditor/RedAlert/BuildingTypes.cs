@@ -19,7 +19,7 @@ using System.Reflection;
 
 namespace MobiusEditor.RedAlert
 {
-    public static class BuildingTypes
+    public static partial class BuildingTypes
     {
         public static readonly BuildingType AdvancedTech = new BuildingType(0, "atek", "TEXT_STRUCTURE_RA_ATEK", 0, 200, true, 2, 2, null, "Greece", BuildingTypeFlag.Bib);
         public static readonly BuildingType IronCurtain = new BuildingType(1, "iron", "TEXT_STRUCTURE_RA_IRON", 0, 200, true, 2, 2, "00 11", "USSR");
