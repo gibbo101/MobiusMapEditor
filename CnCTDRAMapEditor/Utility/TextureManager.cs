@@ -208,7 +208,9 @@ namespace MobiusEditor.Utility
                 // To fix this issue, enable "Just My Code" when debugging.
                 foreach (ZipArchiveEntry entry in archive.Entries)
                 {
-                    if (name != Path.GetFileNameWithoutExtension(entry.Name))
+                    // Case-insensitive: the game's own archive lookups are case-insensitive, and
+                    // some art ZIPs carry uppercase entry names for frames referenced lowercase.
+                    if (!name.Equals(Path.GetFileNameWithoutExtension(entry.Name), StringComparison.OrdinalIgnoreCase))
                     {
                         continue;
                     }
