@@ -220,6 +220,90 @@ if mono WinForms rendering misbehaves visually.
 
 ---
 
+# ✅ OVERNIGHT SESSION RESULTS (2026-07-17, night 2) — ALL WORK-ORDER ITEMS DONE
+
+All five items below were completed and committed on `tf-mod-aware`. Per-item state:
+
+## 1. Shore/animated-tile fix — DONE (`61e594f`)
+`TemplateType.Init` resolves an 8x shape multiplier per theater for TF templates
+(ids 401+) whenever the tileset reports more shapes than the template has icons;
+`GetShapeIndex` is applied in Init's thumbnail fetch, `MapRenderer`'s canvas fetch,
+and `MainForm.LoadIcons`. The 1x1-random promotion is suppressed for animated TF
+tiles; clear1 (desert 454 / winter 455) is declared 4x4/16 positional icons.
+**Verified:** headless render of TD Pitfall shows closed mud shorelines matching the
+in-game reference; round-trip diffs 0/0/0. New `tools/probes/RenderProbe.cs` draws
+the full map via MapRenderer to a PNG headlessly (the GUI canvas reproduced exactly).
+
+## 2. Overlay table — DONE (`60d354f`)
+TIB01 inserted at id 13 with a NEW `OverlayTypeFlag.Tiberium` resource class;
+V12–V18 and everything after shifted +1 to the mod layout. Tiberium deliberately
+does NOT share the TiberiumOrGold flag: `Map.UpdateResourceOverlays` randomises
+resource cells among same-flag types (gold01–04 shuffle), which would have silently
+converted gold↔tiberium. Resources tool gains a Tiberium checkbox (mutually
+exclusive with Gems, auto-hidden when the type is absent).
+**Verified:** green tiberium renders with density stages matching in-game; all 391
+TIB01 OverlayPack cells round-trip byte-identically.
+
+## 3. Object catalog — DONE (`67d518f` + `6826444`)
+All 60 mod entities declared: 25 buildings, 15 vehicles, 5 aircraft, 8 vessels,
+7 infantry (`RedAlert/{Building,Unit,Infantry}TypesTF.cs`, partial-class pattern like
+TemplateTypesTF; the four RA list classes are now `static partial class`). IDs mirror
+the mod's engine enums; footprints from bdata.cpp occupy lists; owners/power/
+storage/capturable/bibs from the mod's shipped CCDATA/rules.ini; frame usages match
+the art in RA_UNITS.XML. TDSTEAL→gap and TDFBNK→pbox Image= aliases honoured.
+**GDI/Nod need no new houses — the mod repurposes RA's GoodGuy/BadGuy slots, which
+the editor already knows.** Fixed en route: art ZIPs with uppercase entry names
+(TDNSUB/TDOBLISUB/TDGYARD/TDNPEN/TDGAFLD) rendered as dummies — the editor's
+in-ZIP TGA lookup is now case-insensitive like the game's.
+**Verified:** TD Pitfall loads with ZERO warnings (the TDBLOSSOM data-loss hazard is
+CLOSED — saves now preserve all 14 blossom trees); `tools/probes/ObjectProbe.cs`
+renders every TF type's thumbnail to a contact sheet — all 55 non-aircraft types
+show correct art. Aircraft are declared but hidden by the editor's default
+DisableAirUnits (vanilla RA aircraft behave the same). Save-format notes: the editor
+writes RA's full 8-field [STRUCTURES] entries (adds `,0,0` Sellable/Rebuild) and
+omits the redundant `,None` trigger on [TERRAIN] — both semantically identical to
+the transcoder's output, and the game parses either form.
+Known cosmetic quirk (pre-existing, NOT ours): turreted-building thumbnails show a
+stray corner fragment — vanilla gun/agun/tsla exhibit it identically.
+
+## 4. MessageBox blank buttons — INVESTIGATED, parked with repro (`e3cc054`)
+Mono 6.8's MessageBox uses plain Buttons with `Locale.GetText` labels and fixed
+86x23 sizing — nothing exotic. So blank labels are either a Locale catalog quirk or
+hit ALL bare Buttons (undetermined: the desktop session was password-locked again,
+so no pixels). `tools/probes/MsgBoxTest.cs` is ready: one normal Button + a
+YesNoCancel MessageBox. Run it on an unlocked display; if the normal Button has text
+but the MessageBox doesn't → fix is a shadow MessageBox wrapper in the MobiusEditor
+namespace (81 call sites resolve to it without edits); if both are blank → theme/
+font level, use the Wine fallback. Interim workaround stands: buttons are
+Yes | No | Cancel, left to right.
+
+## 5. Regression sweep — **31/31 PASS**
+`tools/probes/sweep_maps.sh` + `codec_diff.py`: every shipped CustomMaps .MPR through
+load→save→codec-diff (saves to /tmp/sweep-out, never touches originals). Final result:
+**all 31 maps pass with byte-identical [TFTDTiles]/[MapPack]/[OverlayPack]** (after
+MapPack canonicalisation: explicit clear `(0,0)` == `none`, which the game treats
+identically and the editor normalises on save).
+
+Two fixes came out of the first sweep run:
+- **Probes now Reset managers to the MAP's theater** (read from `Theater=` in the file)
+  instead of hardcoding Temperate — desert maps live in the Interior slot and their
+  desert-only templates (tdclear1 etc.) were dropped wholesale under the wrong tileset.
+  Winter maps are unaffected (by design they are Theater=Temperate using TDW art).
+- **`GetTFTDFallback` gained a live `ExistsInTheater` gate** (GamePluginRA): the
+  vanilla-fallback map is per-theatre in the transcoder, and Interior has no
+  shore/water templates — the editor was writing temperate template ids into Interior
+  MapPacks (invalid for vanilla clients). With the gate, desert maps round-trip 0/0/0.
+
+Per-map: 29 clean PASS; 2 PASS-with-warnings, both benign pre-existing flaws in the
+shipped maps themselves, not editor bugs:
+- `…000A` — two terrain objects overlap (tc03 on cell 4536 vs tc04 on 4406); the editor
+  skips the second on load, but the save still matches byte-for-byte.
+- `…0012` — 9 vanilla-layer D06 cells carry an icon outside RA's placeable mask
+  (transcoder fallback artifact); the TD layer overrides those cells in the mod, and
+  the save matches byte-for-byte.
+
+---
+
 # ⭐ TONIGHT'S OVERNIGHT SESSION (2026-07-16 → 17) — WORK ORDER
 
 Luke has reviewed the live findings below and wants them all fixed overnight. Read the

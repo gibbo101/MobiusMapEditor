@@ -43,10 +43,14 @@ class RenderProbe
             if (gi != null) { gi.InitClassicFiles(mfm.ClassicFileManager, le, fle, true); }
         }
         Console.WriteLine("classic init errors: " + le.Count + " / " + fle.Count);
-        mfm.Reset(GameType.RedAlert, TheaterTypes.Temperate);
+        // Reset managers to the MAP's theater (desert = Interior slot), matching RoundTripProbe.
+        string mapText = File.ReadAllText(mapIn);
+        TheaterType mapTheater = mapText.Contains("Theater=Interior") ? TheaterTypes.Interior
+            : mapText.Contains("Theater=Snow") ? TheaterTypes.Snow : TheaterTypes.Temperate;
+        mfm.Reset(GameType.RedAlert, mapTheater);
         Globals.TheArchiveManager = mfm;
         var tsm = new TilesetManager(mfm, Globals.TilesetsXMLPath, Globals.TexturesPath);
-        tsm.Reset(GameType.RedAlert, TheaterTypes.Temperate);
+        tsm.Reset(GameType.RedAlert, mapTheater);
         Globals.TheTilesetManager = tsm;
         Globals.TheShapeCacheManager = new ShapeCacheManager();
         Globals.TheTeamColorManager = new TeamColorManager(mfm);

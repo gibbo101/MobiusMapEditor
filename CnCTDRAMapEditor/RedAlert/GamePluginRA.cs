@@ -1461,7 +1461,11 @@ namespace MobiusEditor.RedAlert
                     }
                 }
             }
-            return tfTdFallbackMap.TryGetValue(tdType.ID, out TemplateType fallback) ? fallback : null;
+            // Theater gate resolved live, not cached: the transcoder's fallback map is per-theatre,
+            // and e.g. Interior (the desert slot) has no shore/water templates at all — writing a
+            // temperate template id into an Interior MapPack would be invalid for vanilla clients.
+            return tfTdFallbackMap.TryGetValue(tdType.ID, out TemplateType fallback) && fallback.ExistsInTheater
+                ? fallback : null;
         }
 
         private void LoadMapPack(INI ini, List<string> errors, ref bool modified)
