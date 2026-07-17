@@ -417,3 +417,20 @@ can serve as the verification target for the item-2 fix.
   the mono path "the shipped editor".
 - Upstream merge hygiene: all Linux fixes are surgical and Windows-safe; consider offering the
   PlatformPath/casing/resx fixes upstream to Nyerguds even though the TF fork won't be PR'd.
+
+---
+# ⭐ NEXT SESSION (queued 2026-07-17 morning, Luke off to work)
+1. **BLOSSOM TREES DON'T RENDER ON MAP CANVAS** (probe-confirmed: /tmp/pond-crop3.png vs
+   in-game ref — structures load/save fine, ObjectProbe thumbnail fine, but MapRenderer
+   Buildings layer never draws TDBLOSSOM). Debug MapRenderer.RenderBuilding path next.
+2. **Editor CRASHED in Luke's morning session** — /tmp/mobius-editor.log: mono GDI+ fatal in
+   UnitTool.Dispose → ObjectPropertiesPopup.OnClosed → NavigationWidget.OnMouseMove →
+   Matrix.TransformPoints (disposed MapPanel). New mono-quirk guard needed (null/disposed
+   check in MapPanel.ClientToMap / NavigationWidget.Refresh). Happened after double-click
+   on a unit (ObjectPropertiesPopup). Add to the mono-quirks tally.
+3. **App-tray launcher requested**: create ~/.local/share/applications/mobius-map-editor.desktop
+   → Exec=run-editor.sh, icon from CnCTDRAMapEditor/Resources/GameIcon00.ico (256px, convert
+   to png in ~/.local/share/icons). WM_CLASS unresolved (xprop hit mutter frames — get it
+   via xprop -id on the real client window or mono default "MobiusMapEditor.exe").
+4. MessageBox blank-button repro still pending an unlocked display (§4 above).
+5. Luke confirmed shores+tiberium look right in GUI; blossom check was the first thing he hit.
