@@ -419,6 +419,82 @@ can serve as the verification target for the item-2 fix.
   PlatformPath/casing/resx fixes upstream to Nyerguds even though the TF fork won't be PR'd.
 
 ---
+# ⭐ RESUME HERE (2026-08-23) — official-map Tiberium editing
+
+Session goal: edit the **official** RA skirmish maps (Keep off the grass, Docklands) so they
+ship a mix of Ore and Tiberium, replacing the stock versions rather than adding custom maps.
+
+## Where the official maps live (established this session)
+
+All 124 official RA skirmish maps are `scmNNea.ini` / `scmNNNea.ini` inside
+`Data/CNCDATA/RED_ALERT/AFTERMATH/MAIN.MIX` -> nested `general.mix`. That MIX is the
+extended-but-UNENCRYPTED format: `first==0` in the 4-byte flag header but bit `0x02` clear, so
+NEITHER `mix_tools.py` (reads count at offset 0) nor `ra_mix_extract.py` (demands encryption)
+parses it as-is. Skip the 4-byte header, then read `count u16 + datasize u32 + count*12` plainly.
+
+- **Keep off the grass = `SCM05EA.INI`** (temperate; 249 ore, 78 gem, 3 ore mines)
+- **Docklands = `SCM111EA.INI`** (snow; 434 ore, 243 gem, 10 ore mines)
+- The display-name table is a `[Missions]` entry in the same `general.mix`; a copy is saved at
+  `~/Documents/development/cnc-remastered-mods/map-edits/_official_map_list.ini`.
+
+Delivery plan: shadow by name from the mod's `CCDATA/`, exactly as the campaign hijack does
+(`docs/campaign-tabs-research.md`). **Not yet proven for a multiplayer map** - that is the
+next thing to test. The editor drops `[Digest]` on save, so the digest trap is already handled.
+
+## Fixed this session
+
+1. **Overlay table had drifted from the DLL.** The fork had `TIB01` at id 13 with V12..WaterCrate
+   shifted up; mod commit `e2ce6d68` (2026-07-22) moved `TIB01` to the END of the enum (id 25) so
+   vanilla overlays keep stock indices. Verified against a shipped map (byte 25) before changing
+   anything. `RedAlert/OverlayTypes.cs` renumbered to match. Round-tripped `scm05ea.ini`: 0 load
+   errors, types preserved; only ore/gem density variants collapse (gold01-04 -> gold01), which
+   the engine re-randomises on load.
+2. **`EnhNumericUpDown` crashed on every spinner click under mono.** `CurrentInternalValue`
+   reflects a private `NumericUpDown` field called `currentValue`, which is a .NET Framework
+   name. **Mono calls it `dvalue` and has no `currentValueChanged` at all** (introspected, not
+   guessed). Now resolves either name once into a cached static and degrades to `Value` if
+   neither exists. This also killed the PageUp/PageDown brush-size keys (`ResourcesTool.cs:159`).
+3. **Seven unguarded `ToolTip.SetTool` reflection sites.** That method does not exist under mono
+   either; `ImageTooltip.cs` was guarded, the other seven were not, each a crash waiting on a
+   tooltip. All now null-guarded.
+
+## OPEN — tool dialogs never become visible (blocked here)
+
+Every tool tab works (Structures tool activates, Resources painting works), but **no tool dialog
+window is ever visible, for any tab**. They are NOT missing: `xwininfo -root -tree` shows all of
+them created at sane on-screen geometry, but their X **Map State is `IsUnMapped`** (the active
+one reports `IsUnviewable`). So this is a mono window-mapping problem, not a construction or
+positioning failure.
+
+Prime suspect, `MainForm.cs` ~2795, the show sequence:
+
+```csharp
+activeToolForm.Shown += this.ActiveToolForm_Shown;
+activeToolForm.Visible = false;      // <-- explicit hide before Show()
+activeToolForm.Owner = this;
+activeToolForm.Show();
+```
+
+Setting `Visible = false` and then `Owner` before `Show()` is the thing to attack first. Note the
+Map dialog DID display on the first launch of the session and no dialog has displayed since, so
+find out what differs. `user.config` is empty (90 bytes), so saved positions are NOT the cause,
+and `ToolDialog`'s startLocation/parentBounds path was already ruled out. If `Shown` never fires
+under mono then `ClampForm` never runs either, which is consistent with what we see.
+
+Workaround used meanwhile: the tools themselves work from the toolbar without their dialogs, so
+ore-to-Tiberium painting was completed with no dialog at all.
+
+## State of the work
+
+`~/Documents/development/cnc-remastered-mods/map-edits/scm05ea.ini` is saved and verified:
+105 TIB01 cells at the correct byte 25, 176 ore, 78 gems and 16 walls intact, no `[Digest]`,
+2 of 3 ore mines remaining, `[STRUCTURES]` still empty (no blossom trees placed - see the
+canvas-render bug below, they would have been invisible).
+
+Next steps: place blossom trees for the mines, then drop the file into the desktop prefix's
+mod `CCDATA/` as `scm05ea.ini` and confirm the shadow works for a skirmish map.
+
+---
 # ⭐ NEXT SESSION (queued 2026-07-17 morning, Luke off to work)
 1. **BLOSSOM TREES DON'T RENDER ON MAP CANVAS** (probe-confirmed: /tmp/pond-crop3.png vs
    in-game ref — structures load/save fine, ObjectProbe thumbnail fine, but MapRenderer
