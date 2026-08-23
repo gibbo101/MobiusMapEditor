@@ -57,12 +57,28 @@ namespace MobiusEditor.Controls
 
         [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        /// <summary>
+        /// Backing field of <see cref="NumericUpDown.Value"/>. Named "currentValue" by the .NET
+        /// Framework and "dvalue" by mono; null if neither is present, in which case the property
+        /// degrades to the public Value.
+        /// </summary>
+        private static readonly FieldInfo InternalValueField =
+            typeof(NumericUpDown).GetField("currentValue", BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? typeof(NumericUpDown).GetField("dvalue", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        /// <summary>Companion dirty flag; exists only on the .NET Framework.</summary>
+        private static readonly FieldInfo InternalValueChangedField =
+            typeof(NumericUpDown).GetField("currentValueChanged", BindingFlags.Instance | BindingFlags.NonPublic);
+
         public decimal CurrentInternalValue
         {
             get
             {
-                FieldInfo val = typeof(NumericUpDown).GetField("currentValue", BindingFlags.Instance | BindingFlags.NonPublic);
-                return (decimal)val.GetValue(this);
+                if (InternalValueField == null)
+                {
+                    return Value;
+                }
+                return (decimal)InternalValueField.GetValue(this);
             }
             set
             {
@@ -74,11 +90,16 @@ namespace MobiusEditor.Controls
                         // Let the system take care of the 'out of range' exception.
                         Value = value;
                     }
-                    Type numUpDownType = typeof(NumericUpDown);
-                    FieldInfo val = numUpDownType.GetField("currentValue", BindingFlags.Instance | BindingFlags.NonPublic);
-                    val.SetValue(this, value);
-                    FieldInfo valChanged = numUpDownType.GetField("currentValueChanged", BindingFlags.Instance | BindingFlags.NonPublic);
-                    valChanged.SetValue(this, true);
+                    if (InternalValueField == null)
+                    {
+                        Value = value;
+                        return;
+                    }
+                    InternalValueField.SetValue(this, value);
+                    if (InternalValueChangedField != null)
+                    {
+                        InternalValueChangedField.SetValue(this, true);
+                    }
                     UpdateEditText();
                 }
 
