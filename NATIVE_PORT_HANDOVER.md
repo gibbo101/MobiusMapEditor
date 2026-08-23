@@ -419,6 +419,18 @@ can serve as the verification target for the item-2 fix.
   PlatformPath/casing/resx fixes upstream to Nyerguds even though the TF fork won't be PR'd.
 
 ---
+# ⭐ DIRECTION DECIDED 2026-08-23 — see `LINUX_EDITOR_PLAN.md`
+
+Luke's call: stop patching mono quirks, **build a new Linux-native editor reusing this one's
+core** (already net8-clean), with a friendlier GUI and an agent-drivable headless surface.
+One spike gates it: render a map to PNG on net8 with the imaging layer swapped off
+`System.Drawing`. Triggers/TeamTypes are IN SCOPE from day one (the 17-mission campaign).
+Full rationale, scope and order of work: **`LINUX_EDITOR_PLAN.md`**.
+
+Track B below is superseded as a plan but retained for its cost measurements, which the new
+plan relies on.
+
+---
 # ⭐ RESUME HERE (2026-08-23) — official-map Tiberium editing
 
 Session goal: edit the **official** RA skirmish maps (Keep off the grass, Docklands) so they

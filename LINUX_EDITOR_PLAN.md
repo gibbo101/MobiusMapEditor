@@ -1,0 +1,181 @@
+# A native Linux RA map editor, with an agent-drivable core
+
+Decision record and plan, 2026-08-23. Written at the end of a session that set out to edit the
+official RA skirmish maps and instead spent most of its time fighting the mono runtime.
+
+**Status: DECIDED IN PRINCIPLE, NOT STARTED.** One de-risking spike gates the whole thing.
+Pick this up at the start of the next map-editor session, before any map content work.
+
+---
+
+## The decision
+
+Build a **new Linux-native editor that reuses the Windows editor's core**, rather than continuing
+to patch mono quirks in the WinForms fork.
+
+Luke's framing, in his words: *"we build a new linux version based on the windows one"*, for
+*"greater flexibility"* and a *"new gui, friendlier to use"*, and one that also gives Claude
+programmatic access so it can help author campaign missions.
+
+### Why, in one paragraph
+
+The valuable part of the Mobius editor is not its UI. It is the reverse-engineered knowledge:
+the LCW codec, the MIX and MEG readers, tileset XML resolution, template and occupancy models,
+placement rules, house and team colours. Plus our own layer on top: `TemplateTypesTF`,
+`BuildingTypesTF`, the corrected `OverlayTypes`, and the `[TFTDTiles]` round-trip. **All of that
+already compiles on net8** (measured 2026-07-16: only ~10 peripheral files excluded, 140 errors,
+all of them UI or Steam leakage, and zero in the file-format or map-logic code). The part that is
+Windows-locked is the UI shell, which is also the part that keeps breaking on us. Rewrite what is
+broken, keep what works.
+
+### The evidence that patching mono is a treadmill
+
+One short session on 2026-08-23 hit three more quirks, all fixed, all the same class:
+
+- `EnhNumericUpDown.CurrentInternalValue` reflected `currentValue`, a .NET Framework field name.
+  Mono calls it `dvalue` and has no `currentValueChanged` at all, so the first click on any
+  spinner threw. This also killed the PageUp/PageDown brush-size keys.
+- Seven unguarded `ToolTip.SetTool` reflection sites. That method does not exist under mono
+  either, so each was a crash waiting on a tooltip.
+- Tool dialogs that construct at sane on-screen geometry but never map (`IsUnMapped`). Still
+  open, see the handover.
+
+That is on top of the July batch (0-dpi bitmap crash, shlwapi natural-sort, user32 no-op guards,
+path case-sensitivity). Each fix is small. The tail is long enough that content work keeps
+getting interrupted by runtime archaeology.
+
+---
+
+## The one spike that gates everything
+
+**Render a map to PNG on net8 with the imaging layer swapped off `System.Drawing`.**
+
+Nothing else. This is the only genuine unknown. `MapRenderer` is heavy `System.Drawing` / GDI+,
+and `System.Drawing.Common` is **Windows-only at runtime** on .NET 7+. That risk sits inside the
+core we are counting on reusing, not in the UI we are planning to replace.
+
+- Candidates: SkiaSharp, or KGySoft.Drawing.
+- Reference harness: `tools/probes/RenderProbe.cs` already renders a full map headlessly to
+  `/tmp/map-render.png` under mono. Port that probe first and compare output.
+- **If a map renders correctly, everything after it is grunt work with no unknowns. If it fights
+  us, we learn that in a day rather than a week.**
+
+Same de-risking pattern as the TS asset spike and the desert theatre spike: prove the one hard
+thing in isolation before committing to the surrounding work.
+
+---
+
+## Scope
+
+### Keep (already net8-clean)
+
+`Model/`, `Utility/`, `RedAlert/`, `TiberianDawn/`, `Render/` logic, `Interface/`, plus all file
+format I/O. **Do not reimplement the correctness that lives in `Model/`** (bib handling,
+occupancy masks, placement rules, house colours). It comes along for free.
+
+### Rewrite
+
+The UI shell. ~90 files in EA's tree (`Dialogs/` 28, `Controls/` 27, `Tools/Dialogs/` 23,
+`Tools/` 12), but that is a count of *their* files, not of the functionality we need.
+
+### Triggers and TeamTypes are IN SCOPE from day one
+
+An earlier draft of this plan proposed a first cut without them. **That was wrong and Luke
+corrected it.** `gdi-nod-campaign-story.md` is 17 missions (9 GDI "First Light", 8 Nod "Out of
+the Shadows"), and `coop-missions-design.md:154` states each needs hand-authored Teamtypes and
+Triggers plus briefing and scripted win/lose. Trigger authoring is the single biggest planned use
+of this editor. A resources-and-buildings first cut would hit a wall the moment campaign work
+starts.
+
+Note this cuts both ways. `TriggersDialog` is the largest and fiddliest thing in EA's UI, and a
+half-done trigger editor that silently writes bad triggers is worse than WinForms under Wine.
+But EA's trigger UI is also raw event and action rows, and our 17 missions use a narrow,
+repeating pattern set: pre-placed enemy base, triggered attack waves, reinforcements,
+destroy-all win, briefing. A purpose-built UI could offer **mission-pattern templates** instead
+of raw trigger rows. That is the strongest version of the flexibility argument: genuinely better
+than EA's, not just the same thing on Linux.
+
+Timing gives us runway. Campaign authoring is deferred behind the AI milestone, so nothing is
+blocked today. That is runway, not permission to descope triggers.
+
+---
+
+## Architecture: core library, thin GUI, headless surface
+
+The "Claude support" is not a feature to build. It falls out of this split, and it is worth
+designing for explicitly because it also improves the GUI's testability.
+
+```
+  core library  (formats, map model, renderer, mod tables, validation)
+       |
+       +-- GUI          (docked panels, canvas, tools)
+       +-- headless CLI (open / query / mutate / validate / render / save)
+```
+
+**It already half-works.** Everything verified on 2026-08-23 drove the editor core with no GUI:
+loading `scm05ea.ini`, round-tripping it, diffing decoded overlay bytes, probing blossom sprite
+frames. What is missing is that these are ad-hoc probe programs rather than a real surface.
+
+**The correctness argument for a shared core.** Decoding that OverlayPack meant hand-rolling LCW
+in Python, and `scripts/td_map_to_ra.py` carries yet another implementation of the same codec.
+Those are second and third implementations that can drift from what the editor actually writes.
+A shared core means an agent touching a map uses the identical codec the GUI uses. This is the
+same single-source-of-truth argument as generating the mod tables rather than transcribing them.
+
+**Division of labour for the campaign:** Claude generates the trigger and teamtype scaffolding
+from a mission spec; Luke shapes terrain, placement and pacing in the GUI. Same core, same
+validation, same file.
+
+**Constraint:** the editor must stay fully useful to Luke solo. Agent access is an addition,
+never a dependency.
+
+---
+
+## GUI improvements worth designing in
+
+Each of these is grounded in a real problem hit in practice, not speculative polish.
+
+- **Docked panels, not floating tool dialogs.** EA's tool windows are separate always-on-top
+  forms that remember positions across sessions. That design is exactly why the `IsUnMapped` bug
+  was possible. A docked panel cannot be unmapped or drift off-screen. Better even on Windows.
+- **Drift-proof mod tables.** `OverlayTypes`, `BuildingTypesTF` and `TemplateTypesTF` are
+  hand-transcribed from the mod's C++. On 2026-08-23 they were five days stale and would have
+  silently written Tiberium as haystacks. **Generate them from `redalert/` at build time, or
+  validate against the DLL on load and refuse to open a map on mismatch.** This kills an entire
+  bug class and would have prevented today's blocker outright.
+- **Tools shaped around the actual workflow.** A one-step "convert ore field to Tiberium"
+  (today it is erase-then-repaint, because `AddResource` skips non-empty cells). A blossom-tree
+  brush that seeds a field. A "deploy to CCDATA and verify overlay bytes" action.
+- **Our renderer, our bugs.** The blossom tree that never draws on the canvas is effectively
+  unfixable today because it is buried in someone else's `MapRenderer`.
+
+---
+
+## Licensing
+
+The Mobius source is GPL with EA's Section 7 additional restrictions. Anything reusing that core
+inherits it. This blocks nothing (the mod DLL is already GPL v3) but it shapes how the editor
+would be published, so decide it up front rather than at release.
+
+---
+
+## Wine, as insurance only
+
+Wine 9.0 is installed and running the existing exe under real .NET Framework has **never been
+tested**. It is worth about twenty minutes because it would sidestep every mono quirk at once
+with zero code change, unblocking both the Tiberium map work and campaign authoring while the
+new editor is built.
+
+It is insurance, not the plan. The `IsUnMapped` tool-dialog bug is a ready-made test case: if the
+dialogs show under Wine, that settles whether it works.
+
+---
+
+## Order of work for the next session
+
+1. Wine test (~20 min). Cheap unblock, independent of everything below.
+2. **The renderer spike.** Gate on the whole plan.
+3. Only if 2 passes: scaffold core + headless CLI, then the GUI shell with triggers designed in.
+
+Current blocker if you go back to the existing editor first: tool dialogs never become visible.
+Diagnosis and the prime suspect are at the top of `NATIVE_PORT_HANDOVER.md`.
