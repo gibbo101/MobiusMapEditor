@@ -1578,7 +1578,10 @@ namespace MobiusEditor.Dialogs
             Point resPoint = target.PointToScreen(new Point(0, target.Height));
             MethodInfo m = toolTip.GetType().GetMethod("SetTool",
                        BindingFlags.Instance | BindingFlags.NonPublic);
-            m.Invoke(toolTip, new object[] { target, message, 2, resPoint });
+            if (m != null)
+            {
+                m.Invoke(toolTip, new object[] { target, message, 2, resPoint });
+            }
             tooltipShownOn = target;
             tooltipShown = message;
             return true;
