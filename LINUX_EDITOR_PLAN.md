@@ -160,7 +160,11 @@ Hardwiring it to `redalert/` C++ was the wrong shape.
 that. A profile = game (RA or TD) + zero or more mods, discovered by reading `ccmod.json` under
 the `Mods/` root (inside the Proton prefix on Linux) and the Workshop cache
 (`steamapps/workshop/content/1213210/`, read-only inspection of other authors' mods). Vanilla
-is the empty profile. The list is ordered from day one even if v1 only ever holds one mod.
+is the empty profile. **The user chooses, in a picker**: which mods to load assets for and in
+what order, at startup or from a menu at any time; switching re-resolves the open map (entities
+that stop being known become placeholders, kept not deleted). Assets and tables resolve through
+the ordered list last-write-wins, exactly as the game does, so the editor shows what that load
+order would show in-game. Ordered from day one even if v1 only ever holds one mod.
 
 **Mod manifests, generated at mod build time.** A mod's added entities come from a manifest in
 the mod folder (working name `mapeditor.json`: templates, overlays, buildings, units, theatre
