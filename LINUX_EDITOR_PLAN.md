@@ -159,23 +159,18 @@ would be published, so decide it up front rather than at release.
 
 ---
 
-## Wine, as insurance only
+## Wine: dropped (2026-08-30)
 
-Wine 9.0 is installed and running the existing exe under real .NET Framework has **never been
-tested**. It is worth about twenty minutes because it would sidestep every mono quirk at once
-with zero code change, unblocking both the Tiberium map work and campaign authoring while the
-new editor is built.
-
-It is insurance, not the plan. The `IsUnMapped` tool-dialog bug is a ready-made test case: if the
-dialogs show under Wine, that settles whether it works.
-
----
+Wine 9.0 is installed but running the prebuilt exe under real .NET Framework has never been
+tested, and on 2026-08-30 Luke confirmed the earlier discussion: **build native, do not lean on
+Wine.** It would not inform the native build at all, nothing is blocked today that a stopgap
+would unblock (campaign authoring is deferred behind the AI milestone), and a working stopgap
+would only tempt the native editor to slip. Not part of the plan.
 
 ## Order of work for the next session
 
-1. Wine test (~20 min). Cheap unblock, independent of everything below.
-2. **The renderer spike.** Gate on the whole plan.
-3. Only if 2 passes: scaffold core + headless CLI, then the GUI shell with triggers designed in.
+1. **The renderer spike.** Gate on the whole plan.
+2. Only if 1 passes: scaffold core + headless CLI, then the GUI shell with triggers designed in.
 
 Current blocker if you go back to the existing editor first: tool dialogs never become visible.
 Diagnosis and the prime suspect are at the top of `NATIVE_PORT_HANDOVER.md`.

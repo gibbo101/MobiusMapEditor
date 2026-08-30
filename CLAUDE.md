@@ -12,7 +12,7 @@ Workspace-wide rules (Deck deploys, memory, don't-dos) live in `../CLAUDE.md` �
 1. `LINUX_EDITOR_PLAN.md` — **the live decision record (2026-08-23).** Build a Linux-native
    editor reusing the net8-clean core (formats, codecs, map model, our TF tables) and rewrite the
    WinForms shell (Avalonia, docked panels, headless CLI for agent-driven trigger authoring).
-   Status: DECIDED, NOT STARTED. Order of work: Wine test (~20 min, insurance) → **renderer spike**
+   Status: DECIDED, NOT STARTED. Order of work: **renderer spike**
    (map → PNG on net8 without `System.Drawing`; the one gating unknown) → only then scaffold.
 2. `NATIVE_PORT_HANDOVER.md` — state of the *existing* mono-run WinForms fork: mod-aware tiles
    shipped (60 TF entities, 31/31 CustomMaps round-trip byte-identical), mono quirk fixes, and the
@@ -26,8 +26,7 @@ Workspace-wide rules (Deck deploys, memory, don't-dos) live in `../CLAUDE.md` �
 - Avalonia templates installed and build-verified on this box.
 - mono + msbuild installed (for the current net4.7.2 fork): `./run-editor.sh` launches it;
   logs to `/tmp/mobius-editor.log`.
-- Wine 9.0 installed; running `_prebuilt/MobiusMapEditor_1.6.1.0/MobiusMapEditor.exe` under real
-  .NET Framework has **never been tested** — that is step 1 of the plan.
+- Wine 9.0 is installed but **Wine is not part of the plan** (decided 2026-08-30: build native).
 - Pristine upstream reference: `../reference/MobiusMapEditor/` (read-only). EA's original editor
   source ships in `~/.steam/steam/steamapps/common/CnCRemastered/SOURCECODE/CnCTDRAMapEditor/`.
 
