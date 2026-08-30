@@ -151,6 +151,42 @@ Each of these is grounded in a real problem hit in practice, not speculative pol
 
 ---
 
+## Mod awareness is generic, not TF-specific (Luke, 2026-08-30)
+
+The editor must work for vanilla RA and TD, for Tiberian Factions, and for other people's mods.
+Hardwiring it to `redalert/` C++ was the wrong shape.
+
+**Profiles.** The game loads base install + an ordered list of mod folders; the editor mirrors
+that. A profile = game (RA or TD) + zero or more mods, discovered by reading `ccmod.json` under
+the `Mods/` root (inside the Proton prefix on Linux) and the Workshop cache
+(`steamapps/workshop/content/1213210/`, read-only inspection of other authors' mods). Vanilla
+is the empty profile. The list is ordered from day one even if v1 only ever holds one mod.
+
+**Mod manifests, generated at mod build time.** A mod's added entities come from a manifest in
+the mod folder (working name `mapeditor.json`: templates, overlays, buildings, units, theatre
+slot overrides, custom sections such as `[TFTDTiles]`). TF generates it from the C++ in the
+mod's build (`generate_tf_templates.py` already extracts the data; it emits C# today and will
+emit the manifest instead). Other authors can hand-write one. The manifest records the hash of
+the DLL it was generated from; the editor compares it to the DLL actually present and warns on
+drift. This replaces the "generate tables at editor build time" idea above.
+
+**Unknown ≠ delete. Loading is lossless by default.** Today's editor drops unknown structures
+silently and then saves without them, which is the data-loss hazard in the handover. The new
+core keeps unknown template ids, overlays and objects as opaque entries, renders a marked
+placeholder, lists them in a Problems panel, and writes them back byte-for-byte. Stripping them
+is an explicit user action. Known entry with missing art gets placeholder art, data intact.
+
+**Maps remember their profile.** A custom INI section (the game ignores unknown sections;
+`[TFTDTiles]` proves it) records the mod names + versions the map was authored against. Loading
+under a different profile offers: switch profile / load anyway. That turns "loaded with a
+different mod in mind" from silent corruption into a one-click fix.
+
+**Where a saved map is usable is a game fact; the editor makes it visible.** The validator
+classifies every map as *vanilla-safe* or *needs mod X* by checking entities against the base
+tables. Maps saved into `<mod>/CustomMaps/` ship with the mod and exist only when it is loaded;
+maps in `Local_Custom_Maps/` appear regardless but degrade or crash without their mod. The save
+dialog knows the target kind and warns when a mod-dependent map goes to a non-mod location.
+
 ## Licensing
 
 The Mobius source is GPL with EA's Section 7 additional restrictions. Anything reusing that core

@@ -88,8 +88,11 @@ model. That is ideal TDD territory and the plan depends on it:
 ## Rules specific to this repo
 
 - Mod tables (`OverlayTypes`, `BuildingTypesTF`, `TemplateTypesTF`) are hand-transcribed from
-  the mod's `redalert/` C++ and **drift** — verify against the DLL source before trusting them,
-  and generate rather than transcribe when the new core is built.
+  the mod's `redalert/` C++ and **drift** — verify against the DLL source before trusting them.
+  The new core is **mod-generic**: profiles (game + ordered mods) and per-mod manifests
+  generated at *mod* build time, never TF-specific code. See the plan's "Mod awareness" section.
+- **Unknown ≠ delete.** Loading is lossless: unknown entities are kept opaque, shown as
+  placeholders, written back byte-for-byte. Stripping is an explicit user action.
 - Triggers/TeamTypes are in scope from day one of the new editor (17 campaign missions depend on
   them) — do not descope them.
 - **Don't reimplement the correctness that lives in `Model/`** (bibs, occupancy, placement,
