@@ -10,12 +10,10 @@ read it too. Luke is on JetBrains (Rider for C#); don't scaffold `.vscode/`.
 
 ## Read first, in this order
 
-1. `LINUX_EDITOR_PLAN.md` — **the live decision record (2026-08-23, amended 2026-08-30).** Build
-   a Linux-native editor reusing the net8-clean core (formats, codecs, map model, our TF tables)
-   and rewrite the WinForms shell (Avalonia, docked panels, headless CLI for agent-driven trigger
-   authoring). Status: DECIDED, NOT STARTED. Wine is **not** part of the plan. Order of work:
-   **renderer spike** (map → PNG on net8 without `System.Drawing`; the one gating unknown) →
-   only then scaffold.
+1. **The native editor now lives in `../cnc-map-editor/`** (own repo, own `CLAUDE.md` and
+   `PLAN.md`). This fork is its **reference and oracle**: the mono build renders/saves the
+   reference PNGs and maps that `cnc-map-editor`'s tests compare against (`oracle/regen.sh`
+   there drives `tools/probes/` here). Develop the editor there, not here.
 2. `NATIVE_PORT_HANDOVER.md` — state of the *existing* mono-run WinForms fork: mod-aware tiles
    shipped (60 TF entities, 31/31 CustomMaps round-trip byte-identical), mono quirk tally, where
    the official maps live, and the open blocker (tool dialogs never map on screen, `IsUnMapped`).
