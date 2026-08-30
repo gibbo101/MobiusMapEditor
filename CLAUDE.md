@@ -80,8 +80,10 @@ model. That is ideal TDD territory and the plan depends on it:
 - **Don't unit-test the GUI pixels;** test the view-model/command layer the GUI calls, and
   verify the canvas by eye (screenshot loop). Every GUI action should be callable from the
   headless CLI, which is what makes it testable.
-- Framework: xUnit on net8 (decide at scaffold time; note the choice here). Tests run with
-  `dotnet test`; keep the suite fast enough to run on every commit.
+- **Red → green, always (Luke, 2026-08-30):** write the failing test, run it and see it fail,
+  then make the smallest code change that turns it green. A test that passes on first run is
+  not evidence of anything — check it actually exercises the change.
+- Framework: **xUnit on net8**, `dotnet test`. Keep the suite fast enough to run on every commit.
 
 ## Rules specific to this repo
 
