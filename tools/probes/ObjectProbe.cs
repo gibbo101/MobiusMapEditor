@@ -59,6 +59,10 @@ class ObjectProbe
         }
 
         IGamePlugin plugin = new GameInfoRedAlert().CreatePlugin(false, true);
+        // Match the GUI's LoadNewPlugin: Initialize loads RULES.INI layers and the
+        // team colors, so renders carry house remaps exactly like the editor canvas.
+        plugin.Initialize();
+        plugin.Map.FlagColors = plugin.GetFlagColors();
         FileType ft = FileType.INI;
         plugin.Load(mapIn, mapIn, File.ReadAllBytes(mapIn), null, null, ref ft);
 
