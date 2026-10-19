@@ -11,7 +11,7 @@ class InitProbe
 {
     static void Main(string[] args)
     {
-        string gameDir = "/home/gibbo101/.steam/steam/steamapps/common/CnCRemastered";
+        string gameDir = Environment.GetEnvironmentVariable("CNC_GAME_DIR") ?? throw new Exception("set CNC_GAME_DIR to the CnCRemastered install folder");
         string modDir = "/home/gibbo101/Documents/development/cnc-remastered-mods/cnc-ra-tiberian-factions/build/remaster/Vanilla_RA";
         var modPaths = new Dictionary<GameType, string[]> { { GameType.RedAlert, new[] { modDir } } };
         var gameFolders = new Dictionary<GameType, string>();

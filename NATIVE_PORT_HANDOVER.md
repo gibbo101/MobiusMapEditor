@@ -91,8 +91,8 @@ because you already know the codebase.
 - `~/Documents/development/cnc-remastered-mods/reference/MobiusMapEditor/` — read-only upstream
   clone (older, ~May 2025). Keep pristine for diffing; work in `mobius-editor/` instead.
 - EA original editor source also ships in the game install:
-  `~/.steam/steam/steamapps/common/CnCRemastered/SOURCECODE/CnCTDRAMapEditor/` and the shipped
-  binary `~/.steam/steam/steamapps/common/CnCRemastered/CnCTDRAMapEditor.exe`.
+  `<Steam library>/steamapps/common/CnCRemastered/SOURCECODE/CnCTDRAMapEditor/` and the shipped
+  binary `<Steam library>/steamapps/common/CnCRemastered/CnCTDRAMapEditor.exe`.
 
 ## Mod-side files the editor work will touch (in `cnc-ra-tiberian-factions/`)
 
@@ -209,7 +209,7 @@ Setup already in place:
 - `~/CnCRemastered/Mods/Red_Alert/Vanilla_RA` → symlink to the mod's `build/remaster/Vanilla_RA`
   (the editor's mod folder on mono resolves to `~/CnCRemastered\Mods`; PlatformPath handles it).
 - `ModsToLoadRA` defaults to `Vanilla_RA` in App.config (committed).
-- Launch: `cd ~/.steam/steam/steamapps/common/CnCRemastered && mono <fork>/CnCTDRAMapEditor/bin/Release/MobiusMapEditor.exe`
+- Launch: `cd <Steam library>/steamapps/common/CnCRemastered && mono <fork>/CnCTDRAMapEditor/bin/Release/MobiusMapEditor.exe`
   (an instance was left running overnight).
 
 **Morning walkthrough remaining:** open a converted TD map from

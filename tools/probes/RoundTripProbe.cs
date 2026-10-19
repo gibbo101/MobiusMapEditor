@@ -12,7 +12,7 @@ class RoundTripProbe
 {
     static void Main(string[] args)
     {
-        string gameDir = "/home/gibbo101/.steam/steam/steamapps/common/CnCRemastered";
+        string gameDir = Environment.GetEnvironmentVariable("CNC_GAME_DIR") ?? throw new Exception("set CNC_GAME_DIR to the CnCRemastered install folder");
         string modDir = "/home/gibbo101/Documents/development/cnc-remastered-mods/cnc-ra-tiberian-factions/build/remaster/Vanilla_RA";
         string mapIn = args.Length > 0 ? args[0]
             : modDir + "/CustomMaps/UGC_F1BE000000000006_0000000000000006_MAPDATA.MPR";
