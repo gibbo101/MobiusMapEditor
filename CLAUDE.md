@@ -56,6 +56,8 @@ dotnet build MobiusMapEditor.sln -c Release     # .NET SDK 8.0.421 / 10.0.302 in
 
 - Probes: see `tools/probes/README.md` (`mono-csc` against the built exe). Reset the megafile
   AND tileset managers before `plugin.Load` or a headless run blocks on a MessageBox forever.
+  A probe that fails headless with "Could not open display", or hangs under Xvfb, has hit a
+  MessageBox: an exception, usually in `InitTheater`. Find the exception; don't add a display.
 - Regression sweep: `tools/probes/sweep_maps.sh` — all 31 mod CustomMaps must round-trip
   byte-identical (`[TFTDTiles]` + `[MapPack]` diffed with the mod's `td_map_to_ra.py` codec).
 - Wine 9.0 is installed but out of scope — don't reach for it.

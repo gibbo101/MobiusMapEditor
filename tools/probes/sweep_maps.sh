@@ -6,7 +6,7 @@ set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REL="$HERE/../../CnCTDRAMapEditor/bin/Release"
 MOD=~/Documents/development/cnc-remastered-mods/cnc-ra-tiberian-factions
-MAPS="$MOD/build/remaster/Vanilla_RA/CustomMaps"
+MAPS="${MAPS:-$MOD/build/remaster/Vanilla_RA/CustomMaps}"
 OUT=/tmp/sweep-out
 mkdir -p "$OUT"
 
